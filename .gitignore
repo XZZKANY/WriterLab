@@ -1,0 +1,28 @@
+# Root junk
+logs/
+pgvector-src/
+vs_BuildTools.exe
+install-pgvector.cmd
+codex_probe.obj
+uvicorn-*.log
+*.err.log
+*.out.log
+
+# Python caches and virtualenvs
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.venv/
+**/.venv.broken-py312/
+
+# Runtime secrets
+**/.runtime/
+**/.env
+**/.env.*
+
+# Local editor / OS files
+.DS_Store
+Thumbs.db
+
+# Keep the app source
+!WriterLab-v1/
