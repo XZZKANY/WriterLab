@@ -1,21 +1,48 @@
-#### 第一版技术栈
+# WriterLab v1
 
-- 前端：Next.js
-- 后端：FastAPI
-- 数据库：PostgreSQL + pgvector
-- 本地模型：Ollama
-- 异步任务：先不加，能同步先同步
-- 部署：本地开发优先
-- 编辑器：先用普通 textarea 或基础编辑器，别一开始上复杂富文本
+WriterLab v1 is the main application workspace inside this repository.
 
+## Included Modules
 
+- `fastapi/backend`
+  FastAPI backend, workflow engine, knowledge retrieval, consistency scan, branch APIs, and provider settings APIs
+- `Next.js/frontend`
+  Next.js editor UI for writing, workflow control, branch adoption, consistency review, and VN export preview
+- `docs`
+  Runtime notes and troubleshooting
+- `scripts`
+  Helper scripts for local setup and demo data repair
 
-#### 后端
+## Core Capabilities
 
-##### 一,环境
+- Scene-based writing workflow
+- Hybrid local/cloud model routing
+- pgvector-backed setting memory retrieval
+- Consistency checking across lore, timeline, and chapter context
+- Branch compare and adopt flow
+- VN export preview
+- Saved API key settings from the frontend
 
-`mkdir fastapi`
-`cd fastapi`
+## Run Locally
 
+### Backend
 
+```powershell
+& 'D:\WritierLab\WriterLab-v1\.venv\Scripts\python.exe' -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --app-dir 'D:\WritierLab\WriterLab-v1\fastapi\backend'
+```
 
+### Frontend
+
+```powershell
+Set-Location 'D:\WritierLab\WriterLab-v1\Next.js\frontend'
+npm.cmd run dev -- --hostname 127.0.0.1 --port 3000
+```
+
+## Runtime Notes
+
+See `docs/runtime-notes.md` for:
+
+- startup commands
+- `spawn EPERM` notes
+- live self-check steps
+- demo data repair script usage
