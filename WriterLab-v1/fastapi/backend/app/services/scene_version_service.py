@@ -11,6 +11,8 @@ def create_scene_version(
     content: str,
     source: str,
     label: str | None = None,
+    scene_version: int | None = None,
+    workflow_step_id=None,
 ) -> SceneVersion | None:
     if not content.strip():
         return None
@@ -29,6 +31,8 @@ def create_scene_version(
         content=content,
         source=source,
         label=label,
+        scene_version=scene_version or 1,
+        workflow_step_id=workflow_step_id,
     )
     db.add(version)
     db.commit()
@@ -48,6 +52,7 @@ def list_scene_versions(db: Session, scene_id, limit: int = 10) -> list[SceneVer
 
 def restore_scene_version(db: Session, *, scene: Scene, version: SceneVersion) -> SceneVersion:
     scene.draft_text = version.content
+    scene.scene_version = (scene.scene_version or 0) + 1
     db.add(scene)
     db.commit()
     db.refresh(scene)
@@ -57,6 +62,7 @@ def restore_scene_version(db: Session, *, scene: Scene, version: SceneVersion) -
         content=version.content,
         source="restore",
         label=f"restore version {version.id}",
+        scene_version=scene.scene_version,
     )
     db.add(restored_version)
     db.commit()

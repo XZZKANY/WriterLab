@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class SceneCreate(BaseModel):
@@ -32,6 +32,7 @@ class SceneUpdate(BaseModel):
     must_avoid: list[str] | None = None
     status: str | None = None
     draft_text: str | None = None
+    expected_scene_version: int | None = None
     version_source: str | None = None
     version_label: str | None = None
 
@@ -51,8 +52,8 @@ class SceneResponse(BaseModel):
     must_avoid: list[str] | None
     status: str
     draft_text: str | None
+    scene_version: int
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

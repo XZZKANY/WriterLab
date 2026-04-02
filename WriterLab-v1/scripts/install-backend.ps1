@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $backend = "D:\WritierLab\WriterLab-v1\fastapi\backend"
 Set-Location $backend
 
-$projectRoot = Split-Path $backend -Parent -Parent
+$projectRoot = Split-Path (Split-Path $backend -Parent) -Parent
 $venvPath = Join-Path $projectRoot ".venv"
 $venvPython = Join-Path $venvPath "Scripts\python.exe"
 $pythonCmd = (Get-Command python -ErrorAction Stop).Source

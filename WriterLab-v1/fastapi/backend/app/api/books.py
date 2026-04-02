@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.db.session import get_db
 from app.models.book import Book
+from app.repositories.project_repository import list_books_by_project
 from app.schemas.book import BookCreate, BookResponse
 
 router = APIRouter(prefix="/api/books", tags=["books"])
@@ -25,4 +26,4 @@ def create_book(payload: BookCreate, db: Session = Depends(get_db)):
 
 @router.get("", response_model=list[BookResponse])
 def list_books(project_id: UUID, db: Session = Depends(get_db)):
-    return db.query(Book).filter(Book.project_id == project_id).order_by(Book.created_at.asc()).all()
+    return list_books_by_project(db, project_id)

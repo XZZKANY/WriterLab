@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SceneAnalysisItemResponse(BaseModel):
@@ -15,8 +15,7 @@ class SceneAnalysisItemResponse(BaseModel):
     sort_order: int
     metadata_json: dict | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SceneAnalysisStoredResponse(BaseModel):

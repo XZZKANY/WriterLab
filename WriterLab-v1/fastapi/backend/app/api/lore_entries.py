@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.db.session import get_db
 from app.models.lore_entry import LoreEntry
+from app.repositories.lore_repository import list_lore_entries_by_project
 from app.schemas.lore_entry import LoreEntryCreate, LoreEntryResponse
 
 router = APIRouter(prefix="/api/lore-entries", tags=["lore_entries"])
@@ -27,4 +28,4 @@ def create_lore_entry(payload: LoreEntryCreate, db: Session = Depends(get_db)):
 
 @router.get("", response_model=list[LoreEntryResponse])
 def list_lore_entries(project_id: UUID, db: Session = Depends(get_db)):
-    return db.query(LoreEntry).filter(LoreEntry.project_id == project_id).order_by(LoreEntry.created_at.asc()).all()
+    return list_lore_entries_by_project(db, project_id)

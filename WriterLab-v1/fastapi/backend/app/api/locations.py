@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.db.session import get_db
 from app.models.location import Location
+from app.repositories.lore_repository import list_locations_by_project
 from app.schemas.location import LocationCreate, LocationUpdate, LocationResponse
 
 router = APIRouter(prefix="/api/locations", tags=["locations"])
@@ -24,12 +25,7 @@ def create_location(payload: LocationCreate, db: Session = Depends(get_db)):
 
 @router.get("", response_model=list[LocationResponse])
 def list_locations(project_id: UUID, db: Session = Depends(get_db)):
-    return (
-        db.query(Location)
-        .filter(Location.project_id == project_id)
-        .order_by(Location.created_at.asc())
-        .all()
-    )
+    return list_locations_by_project(db, project_id)
 
 
 @router.get("/{location_id}", response_model=LocationResponse)

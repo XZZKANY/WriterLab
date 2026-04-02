@@ -129,6 +129,10 @@ def create_style_memory_api(payload: StyleMemoryCreate, db: Session = Depends(ge
         derived_rules=payload.derived_rules,
         user_confirmed=payload.user_confirmed,
         status=payload.status,
+        scope_type=payload.scope_type,
+        scope_id=payload.scope_id,
+        active=payload.active,
+        expires_at=payload.expires_at,
     )
 
 

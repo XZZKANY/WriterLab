@@ -4,6 +4,8 @@ import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 
+from app.schemas.workflow import GuardOutput, Violation
+
 
 @dataclass
 class GuardrailResult:
@@ -287,3 +289,24 @@ def validate_prose_for_auto_apply(text: str) -> GuardrailResult:
     if _contains_assistant_guidance(stripped):
         return GuardrailResult(False, "final prose still contains assistant-style advice or Q&A content")
     return GuardrailResult(True)
+
+
+def build_guard_output(text: str, *, step_key: str = "guard") -> GuardOutput:
+    result = validate_prose_for_auto_apply(text)
+    if result.ok:
+        return GuardOutput(safe_to_apply=True, needs_rewrite=False, needs_user_review=False, violations=[])
+
+    violation = Violation(
+        type=f"{step_key}_violation",
+        span=None,
+        rule_id=f"{step_key}.invalid_output",
+        severity="high",
+        reason=result.reason or "Guardrail rejected the candidate output",
+        suggestion="Rewrite the output or merge manually after review.",
+    )
+    return GuardOutput(
+        safe_to_apply=False,
+        needs_rewrite=True,
+        needs_user_review=True,
+        violations=[violation],
+    )

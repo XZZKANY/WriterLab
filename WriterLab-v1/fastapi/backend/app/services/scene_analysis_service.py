@@ -184,7 +184,14 @@ def _resolve_project_id(scene: Scene, db: Session) -> uuid.UUID | None:
     return book.project_id if book else None
 
 
-def analyze_scene(scene: Scene, db: Session) -> tuple[SceneAnalysisResult, uuid.UUID]:
+def analyze_scene(
+    scene: Scene,
+    db: Session,
+    *,
+    provider_mode: str = "live",
+    fixture_scenario: str = "happy_path",
+    return_gateway_result: bool = False,
+) -> tuple[SceneAnalysisResult, uuid.UUID] | tuple[SceneAnalysisResult, uuid.UUID, object]:
     run_id = uuid.uuid4()
     if not (scene.draft_text or "").strip():
         raise AIServiceError(AIErrorType.VALIDATION, "场景正文为空，无法分析", run_id=run_id)
@@ -208,7 +215,14 @@ def analyze_scene(scene: Scene, db: Session) -> tuple[SceneAnalysisResult, uuid.
 
     try:
         try:
-            gateway_result = call_ai_gateway(db, task_type="analyze", prompt=prompt, params={"temperature": 0.2})
+            gateway_result = call_ai_gateway(
+                db,
+                task_type="analyze",
+                prompt=prompt,
+                params={"temperature": 0.2},
+                provider_mode=provider_mode,
+                fixture_scenario=fixture_scenario,
+            )
         except RuntimeError as exc:
             raise AIServiceError(AIErrorType.NETWORK, str(exc), run_id=run_id) from exc
 
@@ -226,6 +240,8 @@ def analyze_scene(scene: Scene, db: Session) -> tuple[SceneAnalysisResult, uuid.
         parsed_response = result.model_dump()
         status = "success"
         error_message = None
+        if return_gateway_result:
+            return result, run_id, gateway_result
         return result, run_id
     except ValueError as exc:
         error_message = f"analyze output is not valid structured JSON: {exc}"

@@ -30,6 +30,7 @@ class Scene(Base):
 
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="draft")
     draft_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    scene_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

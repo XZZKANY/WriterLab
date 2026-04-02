@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.db.session import get_db
 from app.models.character import Character
+from app.repositories.lore_repository import list_characters_by_project
 from app.schemas.character import CharacterCreate, CharacterResponse
 
 router = APIRouter(prefix="/api/characters", tags=["characters"])
@@ -31,4 +32,4 @@ def create_character(payload: CharacterCreate, db: Session = Depends(get_db)):
 
 @router.get("", response_model=list[CharacterResponse])
 def list_characters(project_id: UUID, db: Session = Depends(get_db)):
-    return db.query(Character).filter(Character.project_id == project_id).order_by(Character.created_at.asc()).all()
+    return list_characters_by_project(db, project_id)

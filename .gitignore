@@ -1,5 +1,6 @@
 # Root junk
 logs/
+.npm-cache/
 pgvector-src/
 vs_BuildTools.exe
 install-pgvector.cmd

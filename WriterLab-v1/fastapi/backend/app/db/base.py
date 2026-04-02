@@ -16,6 +16,9 @@ from app.models.scene_analysis_item import SceneAnalysisItem
 from app.models.scene_version import SceneVersion
 from app.models.story_branch import StoryBranch
 from app.models.style_memory import StyleMemory
+from app.models.style_negative_rule import StyleNegativeRule
 from app.models.timeline_event import TimelineEvent
 from app.models.workflow_run import WorkflowRun
+from app.models.workflow_request_dedup import WorkflowRequestDedup
 from app.models.workflow_step import WorkflowStep
+from app.models.vram_lock import VRAMLock

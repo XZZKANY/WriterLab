@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.db.session import get_db
 from app.models.chapter import Chapter
+from app.repositories.project_repository import list_chapters_by_book
 from app.schemas.chapter import ChapterCreate, ChapterResponse
 
 router = APIRouter(prefix="/api/chapters", tags=["chapters"])
@@ -26,4 +27,4 @@ def create_chapter(payload: ChapterCreate, db: Session = Depends(get_db)):
 
 @router.get("", response_model=list[ChapterResponse])
 def list_chapters(book_id: UUID, db: Session = Depends(get_db)):
-    return db.query(Chapter).filter(Chapter.book_id == book_id).order_by(Chapter.chapter_no.asc()).all()
+    return list_chapters_by_book(db, book_id)

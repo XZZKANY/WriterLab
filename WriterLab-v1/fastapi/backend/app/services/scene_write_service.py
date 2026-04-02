@@ -117,7 +117,11 @@ def write_scene(
     length: str,
     guidance: list[str] | None = None,
     analysis_id=None,
-) -> tuple[WriteSceneResult, uuid.UUID]:
+    persist_version: bool = True,
+    provider_mode: str = "live",
+    fixture_scenario: str = "happy_path",
+    return_gateway_result: bool = False,
+) -> tuple[WriteSceneResult, uuid.UUID] | tuple[WriteSceneResult, uuid.UUID, object]:
     run_id = uuid.uuid4()
     request_guidance = [item.strip() for item in (guidance or []) if item and item.strip()]
     if length not in LENGTH_HINTS:
@@ -178,7 +182,14 @@ def write_scene(
 
     try:
         try:
-            gateway_result = call_ai_gateway(db, task_type="write", prompt=prompt, params={"temperature": 0.5, "top_p": 0.9})
+            gateway_result = call_ai_gateway(
+                db,
+                task_type="write",
+                prompt=prompt,
+                params={"temperature": 0.5, "top_p": 0.9},
+                provider_mode=provider_mode,
+                fixture_scenario=fixture_scenario,
+            )
         except RuntimeError as exc:
             raise AIServiceError(AIErrorType.NETWORK, str(exc), run_id=run_id) from exc
 
@@ -219,16 +230,19 @@ def write_scene(
         if len(draft_text) < MIN_LENGTH_HINT[length]:
             notes.append("本次生成篇幅偏短，可以再次生成。")
 
-        version = create_scene_version(
-            db,
-            scene_id=scene.id,
-            content=draft_text,
-            source="write",
-            label="AI生成初稿",
-        )
-        mark_scene_status(scene, SCENE_STATUS_GENERATED)
-        db.add(scene)
-        db.commit()
+        version = None
+        if persist_version:
+            version = create_scene_version(
+                db,
+                scene_id=scene.id,
+                content=draft_text,
+                source="write",
+                label="AI生成初稿",
+                scene_version=scene.scene_version,
+            )
+            mark_scene_status(scene, SCENE_STATUS_GENERATED)
+            db.add(scene)
+            db.commit()
         result = WriteSceneResult(
             draft_text=draft_text,
             notes=notes,
@@ -245,6 +259,8 @@ def write_scene(
         )
         parsed_response = result.model_dump()
         status = "success"
+        if return_gateway_result:
+            return result, run_id, gateway_result
         return result, run_id
     except AIServiceError as exc:
         error_message = exc.message

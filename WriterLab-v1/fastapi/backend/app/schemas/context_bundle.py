@@ -6,6 +6,7 @@ from app.schemas.style_memory import StyleMemoryResponse
 from app.schemas.location import LocationResponse
 from app.schemas.lore_entry import LoreEntryResponse
 from app.schemas.timeline_event import TimelineEventResponse
+from app.schemas.workflow import ContextCompileSnapshot
 
 
 class SceneSummary(BaseModel):
@@ -14,6 +15,8 @@ class SceneSummary(BaseModel):
     conflict: str | None = None
     outcome: str | None = None
     time_label: str | None = None
+    status: str | None = None
+    draft_text: str | None = None
 
 
 class ContextBundleResponse(BaseModel):
@@ -27,3 +30,4 @@ class ContextBundleResponse(BaseModel):
     recent_scenes: list[dict] = []
     must_include: list[str] = []
     must_avoid: list[str] = []
+    context_compile_snapshot: ContextCompileSnapshot | None = None

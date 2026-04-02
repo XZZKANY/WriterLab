@@ -4,12 +4,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.scene import Scene
+from app.repositories.scene_repository import get_scene as get_scene_record
 from app.schemas.scene_analysis_store import SceneAnalysisStoredResponse, UpdateAnalysisSelectionRequest
 from app.schemas.scene_analysis import AnalyzeSceneRequest, AnalyzeSceneResponse
 from app.schemas.scene_revise import ReviseSceneRequest, ReviseSceneResponse
 from app.schemas.scene_write import WriteSceneRequest, WriteSceneResponse
-from app.schemas.workflow import WorkflowRunResponse, WorkflowSceneRequest
+from app.schemas.workflow import (
+    OverrideStepRequest,
+    ProviderMatrixResponse,
+    ResumeWorkflowRequest,
+    WorkflowRunResponse,
+    WorkflowSceneRequest,
+)
 from app.services.ai_errors import AIErrorType, AIServiceError
 from app.services.scene_analysis_service import analyze_scene
 from app.services.scene_analysis_store_service import (
@@ -25,15 +31,28 @@ from app.services.scene_status_service import (
 )
 from app.services.scene_revise_service import revise_scene
 from app.services.scene_write_service import write_scene
-from app.services.workflow_service import execute_scene_workflow, get_workflow_run, list_workflow_steps, queue_scene_workflow
-from app.services.workflow_service import cancel_workflow_run, retry_workflow_run
+from app.services.workflow_service import (
+    cancel_workflow_run,
+    execute_scene_workflow,
+    get_workflow_run,
+    list_workflow_steps,
+    override_workflow_step,
+    queue_scene_workflow,
+    resume_workflow_run,
+)
+from app.services.ai_gateway_service import get_provider_matrix
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 
+@router.get("/provider-matrix", response_model=ProviderMatrixResponse)
+def provider_matrix_api():
+    return get_provider_matrix()
+
+
 @router.post("/analyze-scene", response_model=AnalyzeSceneResponse)
 def analyze_scene_api(payload: AnalyzeSceneRequest, db: Session = Depends(get_db)):
-    scene = db.query(Scene).filter(Scene.id == payload.scene_id).first()
+    scene = get_scene_record(db, payload.scene_id)
     if not scene:
         return AnalyzeSceneResponse(
             success=False,
@@ -60,7 +79,7 @@ def analyze_scene_api(payload: AnalyzeSceneRequest, db: Session = Depends(get_db
 
 @router.post("/write-scene", response_model=WriteSceneResponse)
 def write_scene_api(payload: WriteSceneRequest, db: Session = Depends(get_db)):
-    scene = db.query(Scene).filter(Scene.id == payload.scene_id).first()
+    scene = get_scene_record(db, payload.scene_id)
     if not scene:
         return WriteSceneResponse(
             success=False,
@@ -83,7 +102,7 @@ def write_scene_api(payload: WriteSceneRequest, db: Session = Depends(get_db)):
 
 @router.post("/revise-scene", response_model=ReviseSceneResponse)
 def revise_scene_api(payload: ReviseSceneRequest, db: Session = Depends(get_db)):
-    scene = db.query(Scene).filter(Scene.id == payload.scene_id).first()
+    scene = get_scene_record(db, payload.scene_id)
     if not scene:
         return ReviseSceneResponse(
             success=False,
@@ -122,7 +141,7 @@ def update_analysis_selection_api(analysis_id: UUID, payload: UpdateAnalysisSele
 
 @router.post("/workflows/scene", response_model=WorkflowRunResponse)
 def run_scene_workflow(payload: WorkflowSceneRequest, db: Session = Depends(get_db)):
-    scene = db.query(Scene).filter(Scene.id == payload.scene_id).first()
+    scene = get_scene_record(db, payload.scene_id)
     if not scene:
         raise HTTPException(status_code=404, detail="Scene not found")
 
@@ -133,7 +152,7 @@ def run_scene_workflow(payload: WorkflowSceneRequest, db: Session = Depends(get_
 
 @router.post("/workflows/scene/run-sync", response_model=WorkflowRunResponse)
 def run_scene_workflow_sync(payload: WorkflowSceneRequest, db: Session = Depends(get_db)):
-    scene = db.query(Scene).filter(Scene.id == payload.scene_id).first()
+    scene = get_scene_record(db, payload.scene_id)
     if not scene:
         raise HTTPException(status_code=404, detail="Scene not found")
 
@@ -151,12 +170,28 @@ def get_scene_workflow(workflow_id: UUID, db: Session = Depends(get_db)):
     return run
 
 
-@router.post("/workflows/{workflow_id}/retry", response_model=WorkflowRunResponse)
-def retry_scene_workflow(workflow_id: UUID, db: Session = Depends(get_db)):
+@router.post("/workflows/{workflow_id}/resume", response_model=WorkflowRunResponse)
+def resume_scene_workflow(workflow_id: UUID, payload: ResumeWorkflowRequest, db: Session = Depends(get_db)):
     run = get_workflow_run(db, workflow_id)
     if not run:
         raise HTTPException(status_code=404, detail="Workflow run not found")
-    run = retry_workflow_run(db, run=run)
+    try:
+        run = resume_workflow_run(db, run=run, payload=payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    run.steps = list_workflow_steps(db, workflow_id)
+    return run
+
+
+@router.post("/workflows/{workflow_id}/steps/{step_key}/override", response_model=WorkflowRunResponse)
+def override_scene_workflow_step(workflow_id: UUID, step_key: str, payload: OverrideStepRequest, db: Session = Depends(get_db)):
+    run = get_workflow_run(db, workflow_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Workflow run not found")
+    try:
+        run = override_workflow_step(db, run=run, step_key=step_key, payload=payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     run.steps = list_workflow_steps(db, workflow_id)
     return run
 
