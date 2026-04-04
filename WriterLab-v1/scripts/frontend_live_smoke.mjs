@@ -7,17 +7,14 @@ const siteBase = new URL(process.argv[2] || "http://127.0.0.1:3000");
 const reportPath = process.argv[3] || "";
 
 const commonMarkers = [
-  'href="/project"',
-  'href="/runtime"',
-  'href="/settings"',
   "WriterLab",
 ];
 
 const routeMatrix = [
   {
     path: "/editor",
-    requireCommonMarkers: false,
-    requiredMarkers: ["Workflow Debug", "Runtime Readiness", "Runtime Self-Check Alert"],
+    requireCommonMarkers: true,
+    requiredMarkers: ["写作台与分支工作区", "分析与一致性", "记忆上下文与 VN 导出"],
   },
   {
     path: "/project",
@@ -37,7 +34,7 @@ const routeMatrix = [
   {
     path: "/lore",
     requireCommonMarkers: true,
-    requiredMarkers: [],
+    requiredMarkers: ["设定库", "项目上下文", "设定摘要"],
   },
   {
     path: "/runtime",
