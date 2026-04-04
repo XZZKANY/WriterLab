@@ -1,5 +1,5 @@
-import RuntimeHub from "@/features/runtime/runtime-hub";
+import RuntimeDebugWorkbench from "@/features/runtime/runtime-debug-workbench";
 
 export default function RuntimePage() {
-  return <RuntimeHub />;
+  return <RuntimeDebugWorkbench />;
 }
