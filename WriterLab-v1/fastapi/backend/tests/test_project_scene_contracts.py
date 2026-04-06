@@ -53,7 +53,17 @@ def test_project_overview_returns_books_chapters_scenes_summary(monkeypatch):
         chapter_id=chapter_id,
         scene_no=1,
         title="\u7b2c\u4e00\u573a",
+        pov_character_id=None,
+        location_id=None,
+        time_label=None,
+        goal=None,
+        conflict=None,
+        outcome=None,
+        must_include=None,
+        must_avoid=None,
         status="draft",
+        draft_text=None,
+        scene_version=1,
         created_at=now,
         updated_at=now,
     )
@@ -90,18 +100,6 @@ def test_project_overview_returns_books_chapters_scenes_summary(monkeypatch):
             return _FakeQuery(None)
 
     app.dependency_overrides[get_db] = lambda: _FakeDB()
-    monkeypatch.setattr("app.api.projects.list_books_by_project", lambda db, current_project_id: [fake_book], raising=False)
-    monkeypatch.setattr(
-        "app.api.projects.list_chapters_by_book",
-        lambda db, current_book_id: [fake_chapter],
-        raising=False,
-    )
-    monkeypatch.setattr(
-        "app.api.projects.list_scenes_by_chapter",
-        lambda db, current_chapter_id: [fake_scene],
-        raising=False,
-    )
-
     client = TestClient(app)
     response = client.get(f"/api/projects/{project_id}/overview")
 
