@@ -11,45 +11,20 @@ import {
   Shapes,
 } from "lucide-react";
 import {
-  fetchBooksByProject,
-  fetchChaptersByBook,
-  fetchProjects,
+  fetchProjectOverview,
+  type ProjectBookSummary,
+  type ProjectChapterSummary,
+  type ProjectOverviewResponse,
+  type ProjectResponse,
+  type ProjectSceneSummary,
 } from "@/lib/api/projects";
-import { fetchScenesByChapter } from "@/lib/api/scenes";
 import { AppShell } from "@/shared/ui/app-shell";
 import { InfoCard } from "@/shared/ui/info-card";
 
-type Project = {
-  id: string;
-  name: string;
-  description?: string | null;
-  genre?: string | null;
-  default_language: string;
-};
-
-type Book = {
-  id: string;
-  title: string;
-  summary?: string | null;
-  status: string;
-};
-
-type Chapter = {
-  id: string;
-  book_id: string;
-  chapter_no: number;
-  title: string;
-  summary?: string | null;
-  status: string;
-};
-
-type Scene = {
-  id: string;
-  chapter_id: string;
-  scene_no: number;
-  title: string;
-  status?: string | null;
-};
+type Project = ProjectResponse;
+type Book = ProjectBookSummary;
+type Chapter = ProjectChapterSummary;
+type Scene = ProjectSceneSummary;
 
 type ProjectDetailProps = {
   projectId: string;
@@ -94,29 +69,13 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
       }
 
       try {
-        const projects = await fetchProjects<Project[]>();
-        const currentProject = projects.find((item) => item.id === projectId) ?? null;
-        const nextBooks = await fetchBooksByProject<Book[]>(projectId);
-        const chaptersEntries = await Promise.all(
-          nextBooks.map(async (book) => [
-            book.id,
-            await fetchChaptersByBook<Chapter[]>(book.id),
-          ] as const),
-        );
-        const nextChaptersByBook = Object.fromEntries(chaptersEntries);
-        const allChapters = chaptersEntries.flatMap(([, chapters]) => chapters);
-        const scenesEntries = await Promise.all(
-          allChapters.map(async (chapter) => [
-            chapter.id,
-            await fetchScenesByChapter<Scene[]>(chapter.id),
-          ] as const),
-        );
+        const overview = await fetchProjectOverview<ProjectOverviewResponse>(projectId);
 
         if (!cancelled) {
-          setProject(currentProject);
-          setBooks(nextBooks);
-          setChaptersByBook(nextChaptersByBook);
-          setScenesByChapter(Object.fromEntries(scenesEntries));
+          setProject(overview.project);
+          setBooks(overview.books);
+          setChaptersByBook(overview.chapters_by_book);
+          setScenesByChapter(overview.scenes_by_chapter);
           setError(null);
         }
       } catch (loadError) {

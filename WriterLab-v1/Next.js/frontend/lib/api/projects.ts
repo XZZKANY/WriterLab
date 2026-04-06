@@ -22,6 +22,49 @@ export type ProjectDeleteResponse = {
   project_id: string;
 };
 
+export type ProjectBookSummary = {
+  id: string;
+  project_id: string;
+  title: string;
+  summary?: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectChapterSummary = {
+  id: string;
+  book_id: string;
+  chapter_no: number;
+  title: string;
+  summary?: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectSceneSummary = {
+  id: string;
+  chapter_id: string;
+  scene_no: number;
+  title: string;
+  status?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectOverviewResponse = {
+  project: ProjectResponse;
+  books: ProjectBookSummary[];
+  chapters_by_book: Record<string, ProjectChapterSummary[]>;
+  scenes_by_chapter: Record<string, ProjectSceneSummary[]>;
+  counts: {
+    books: number;
+    chapters: number;
+    scenes: number;
+  };
+};
+
 export function fetchProjects<T>() {
   return apiGet<T>("/api/projects", "读取项目失败");
 }
@@ -32,6 +75,10 @@ export function createProject<T>(body: ProjectCreatePayload) {
 
 export function deleteProject<T>(projectId: string) {
   return apiDelete<T>(`/api/projects/${projectId}`, "删除项目失败");
+}
+
+export function fetchProjectOverview<T>(projectId: string) {
+  return apiGet<T>(`/api/projects/${projectId}/overview`, "读取项目概览失败");
 }
 
 export function fetchBooksByProject<T>(projectId: string) {
