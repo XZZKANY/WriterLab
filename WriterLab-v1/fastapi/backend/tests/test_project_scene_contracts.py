@@ -10,7 +10,7 @@ from app.api.scenes import router as scenes_router
 from app.db.session import get_db
 
 
-def test_project_overview_endpoint_returns_full_contract(monkeypatch):
+def test_project_overview_returns_books_chapters_scenes_summary(monkeypatch):
     app = FastAPI()
     app.include_router(projects_router)
 
@@ -22,19 +22,18 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
 
     fake_project = SimpleNamespace(
         id=project_id,
-        name="????????",
-        description="????????????",
-        genre="??",
+        name="\u9879\u76ee\u6982\u89c8\u70df\u96fe\u6d4b\u8bd5",
+        description="\u7528\u4e8e\u9501\u5b9a\u9879\u76ee\u6982\u89c8\u63a5\u53e3\u5951\u7ea6",
+        genre="\u60ac\u7591",
         default_language="zh-CN",
         created_at=now,
         updated_at=now,
     )
-
     fake_book = SimpleNamespace(
         id=book_id,
         project_id=project_id,
-        title="???",
-        summary="????????",
+        title="\u7b2c\u4e00\u5377",
+        summary="\u9879\u76ee\u6982\u89c8\u4e2d\u7684\u56fe\u4e66",
         status="active",
         created_at=now,
         updated_at=now,
@@ -43,8 +42,8 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
         id=chapter_id,
         book_id=book_id,
         chapter_no=1,
-        title="???",
-        summary="????????",
+        title="\u7b2c\u4e00\u7ae0",
+        summary="\u9879\u76ee\u6982\u89c8\u4e2d\u7684\u7ae0\u8282",
         status="active",
         created_at=now,
         updated_at=now,
@@ -53,7 +52,7 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
         id=scene_id,
         chapter_id=chapter_id,
         scene_no=1,
-        title="???",
+        title="\u7b2c\u4e00\u573a",
         status="draft",
         created_at=now,
         updated_at=now,
@@ -70,8 +69,8 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
             return self
 
         def all(self):
-            if self._result is fake_project:
-                return [fake_project]
+            if self._result is None:
+                return []
             return [self._result]
 
         def first(self):
@@ -91,15 +90,15 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
             return _FakeQuery(None)
 
     app.dependency_overrides[get_db] = lambda: _FakeDB()
-    monkeypatch.setattr("app.api.projects.list_books_by_project", lambda db, project_id: [fake_book], raising=False)
+    monkeypatch.setattr("app.api.projects.list_books_by_project", lambda db, current_project_id: [fake_book], raising=False)
     monkeypatch.setattr(
         "app.api.projects.list_chapters_by_book",
-        lambda db, book_id: [fake_chapter],
+        lambda db, current_book_id: [fake_chapter],
         raising=False,
     )
     monkeypatch.setattr(
         "app.api.projects.list_scenes_by_chapter",
-        lambda db, chapter_id: [fake_scene],
+        lambda db, current_chapter_id: [fake_scene],
         raising=False,
     )
 
@@ -109,9 +108,9 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["project"]["id"] == str(project_id)
-    assert payload["project"]["name"] == "????????"
+    assert payload["project"]["name"] == "\u9879\u76ee\u6982\u89c8\u70df\u96fe\u6d4b\u8bd5"
     assert payload["books"][0]["id"] == str(book_id)
-    assert payload["books"][0]["title"] == "???"
+    assert payload["books"][0]["title"] == "\u7b2c\u4e00\u5377"
     assert payload["chapters_by_book"][str(book_id)][0]["id"] == str(chapter_id)
     assert payload["chapters_by_book"][str(book_id)][0]["chapter_no"] == 1
     assert payload["scenes_by_chapter"][str(chapter_id)][0]["id"] == str(scene_id)
@@ -135,10 +134,10 @@ def test_delete_missing_project_returns_404(monkeypatch):
     response = client.delete(f"/api/projects/{missing_project_id}")
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Project not found"
+    assert response.json() == {"detail": "Project not found"}
 
 
-def test_update_scene_version_mismatch_returns_409(monkeypatch):
+def test_scene_update_rejects_stale_scene_version(monkeypatch):
     app = FastAPI()
     app.include_router(scenes_router)
 
@@ -147,7 +146,7 @@ def test_update_scene_version_mismatch_returns_409(monkeypatch):
         id=scene_id,
         chapter_id=UUID("11111111-1111-1111-1111-111111111111"),
         scene_no=1,
-        title="??????",
+        title="\u7248\u672c\u51b2\u7a81\u573a\u666f",
         pov_character_id=None,
         location_id=None,
         time_label=None,
@@ -157,7 +156,7 @@ def test_update_scene_version_mismatch_returns_409(monkeypatch):
         must_include=None,
         must_avoid=None,
         status="draft",
-        draft_text="????",
+        draft_text="\u521d\u59cb\u6587\u672c",
         scene_version=2,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
@@ -175,10 +174,10 @@ def test_update_scene_version_mismatch_returns_409(monkeypatch):
             return _FakeQuery()
 
         def commit(self):
-            raise AssertionError("????????????")
+            raise AssertionError("\u7248\u672c\u51b2\u7a81\u65f6\u4e0d\u5e94\u63d0\u4ea4\u6570\u636e\u5e93")
 
         def refresh(self, obj):
-            raise AssertionError("???????????")
+            raise AssertionError("\u7248\u672c\u51b2\u7a81\u65f6\u4e0d\u5e94\u5237\u65b0\u5bf9\u8c61")
 
     app.dependency_overrides[get_db] = lambda: _FakeDB()
     monkeypatch.setattr("app.api.scenes.create_scene_version", lambda *args, **kwargs: None)
@@ -188,12 +187,12 @@ def test_update_scene_version_mismatch_returns_409(monkeypatch):
     response = client.patch(
         f"/api/scenes/{scene_id}",
         json={
-            "draft_text": "??????",
+            "draft_text": "\u66f4\u65b0\u540e\u7684\u6587\u672c",
             "expected_scene_version": 1,
             "version_source": "manual",
-            "version_label": "????",
+            "version_label": "\u624b\u52a8\u66f4\u65b0",
         },
     )
 
     assert response.status_code == 409
-    assert response.json()["detail"] == "Scene version mismatch"
+    assert response.json() == {"detail": "Scene version mismatch"}
