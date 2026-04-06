@@ -184,8 +184,7 @@ export function VersionsPane({
               <option value="">请选择分支</option>
               {branches.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {looksGarbledText(item.name) ? "剧情分支" : item.name} ·{" "}
-                  {formatTime(item.updated_at)}
+                  {looksGarbledText(item.name) ? "剧情分支" : item.name} · {formatTime(item.updated_at)}
                 </option>
               ))}
             </select>

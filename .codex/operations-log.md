@@ -262,3 +262,259 @@
   - 均已确认在仓库内存在
 - 本轮未运行前后端测试脚本
   - 原因：本次仅修改文档与 `.codex` 留痕文件，未触及应用代码或测试逻辑
+
+## 2026-04-02 删除项目网络错误修复
+
+生成时间：2026-04-02 18:33:26
+
+### 编码前检查 - 删除项目网络错误修复
+
+- 已查阅上下文摘要文件：`D:/WritierLab/.codex/context-summary-delete-project-network-error.md`
+- 将使用以下可复用组件：
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/client.ts`：统一 API 请求封装与错误解析
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/projects.ts`：删除项目业务 API 包装
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`：API client 定向回归测试模式
+- 将遵循命名约定：沿用前端 `camelCase` 函数与 `api*` 请求封装命名
+- 将遵循代码风格：把网络异常收敛在 `client.ts`，不在页面层新增特判
+- 确认不重复造轮子，证明：已比对 `project-hub.tsx`、`lore-hub.tsx`、`api-client.test.mjs`，现有共享模式都是直接消费 `Error.message`
+
+### 实施记录
+
+- 先在 `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs` 新增 `apiDelete wraps network failures with api base context` 用例。
+- 运行 `node --experimental-strip-types --test D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - 结果：先失败，暴露当前行为仍是浏览器原始 `TypeError: Failed to fetch`
+- 修改 `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/client.ts`
+  - 新增 `formatNetworkErrorMessage()` 统一包装网络异常
+  - 在 `apiRequest()` 中捕获 `fetch()` 抛错并返回中文提示
+  - 保持原有 `detail/message` 解析与 `204` 空响应逻辑不变
+
+### 编码后声明 - 删除项目网络错误修复
+
+#### 1. 复用了以下既有组件
+
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/client.ts`：继续作为所有 API 调用的统一入口
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`：沿用现有 `node:test` + `fetch mock` 模式
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/project/project-hub.tsx`：不改页面逻辑，直接复用底层错误消息展示链路
+
+#### 2. 遵循了以下项目约定
+
+- 命名约定：新增函数命名为 `formatNetworkErrorMessage`，与现有 `pickErrorMessage`、`readResponseBody` 一致
+- 代码风格：继续使用小函数封装，未把网络错误判断散落到页面组件
+- 文件组织：只修改 `lib/api` 与 `tests/features` 这一对现有实现/测试入口
+
+#### 3. 对比了以下相似实现
+
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/project/project-hub.tsx`：页面层只消费 `Error.message`，因此不在这里补网络特判
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-hub.tsx`：同样直接展示 `loadError.message`，说明统一修复点应在 API client
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`：沿用既有测试方式扩展网络错误场景
+
+#### 4. 未重复造轮子的证明
+
+- 检查了前端请求封装和多个页面错误消费方式，确认不存在现成的网络错误包装函数
+- 选择在 `client.ts` 增量扩展，而不是新增平行请求工具或页面级删除辅助逻辑
+
+### 本地验证结果
+
+- `node --experimental-strip-types --test D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - 结果：3 项通过
+- `npm run typecheck`
+  - 结果：通过
+- `npx eslint lib/api/client.ts tests/features/api-client.test.mjs`
+  - 结果：通过
+
+### 残余风险
+
+- 本次修复提升的是错误可读性与排障效率，不会自动修正错误的 API 基址或未启动的后端进程
+- 仓库里仍有部分旧文件存在乱码文本，这一轮未展开全量编码清理，避免扩大变更面
+
+## 2026-04-02 删除项目代理规避修复
+
+- 运行态核查结果：本机后端 `127.0.0.1:8000` 正常监听，命令行可成功执行 `GET /api/projects` 与 `DELETE /api/projects/{id}`。
+- 进一步发现：浏览器场景下删除项目更可能受跨源直连与本机代理环境干扰，而不是删除接口故障。
+- 实施方案：
+  - 在 `D:/WritierLab/WriterLab-v1/Next.js/frontend/next.config.ts` 增加 `/api/:path*` 到后端的 rewrite
+  - 在 `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/client.ts` 中改为浏览器默认走同源 `/api` 代理，服务端/测试环境仍回退到 `http://127.0.0.1:8000`
+  - 在 `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs` 新增浏览器运行时默认基址测试
+- 本轮验证：`node --experimental-strip-types --test tests/features/api-client.test.mjs`、`npm run typecheck`、`npx eslint lib/api/client.ts next.config.ts tests/features/api-client.test.mjs`、`npm run build:node` 全部通过。
+- 注意：`next.config.ts` 变更需要重启前端开发服务器后才会生效。
+
+## 2026-04-02 删除项目 500 修复
+
+- 新症状：前端同源代理打通后，删除真实项目返回 `Internal Server Error`。
+- 根因复现：用本地数据库构造“SceneVersion.workflow_step_id 指向 WorkflowStep”的项目后，调用 `delete_project()` 触发 PostgreSQL 外键错误：`scene_versions_workflow_step_id_fkey`。
+- 根因定位：`project_repository.delete_project()` 在删除 `WorkflowStep` 之前，没有先处理 `SceneVersion.workflow_step_id` 对 `workflow_steps.id` 的引用。
+- 修复：在 `D:/WritierLab/WriterLab-v1/fastapi/backend/app/repositories/project_repository.py` 中新增 `_clear_scene_version_workflow_steps()`，并在删除 `WorkflowStep` 前先将目标场景下版本记录的 `workflow_step_id` 置空。
+- 回归：新增 `D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_project_repository.py`，验证清链动作发生在删除 `WorkflowStep` 之前。
+- 本地验证：
+  - `python -m pytest .../tests/test_project_repository.py -q` 通过
+  - `python -m pytest .../tests/test_api_routes.py -q` 通过
+  - 真实数据库复现脚本：修复前可稳定触发外键错误，修复后 `delete_project()` 返回 `True`
+- 运行态处理：已重启后端，新监听 PID 为 19212，`GET http://127.0.0.1:8000/api/projects` 返回 200。
+## 2026-04-02 写作与工作台重构拆分方案
+
+- 任务目标：基于现有 `editor-workspace.tsx`、`writing-pane.tsx`、`versions-pane.tsx`、`sidebar-panels.tsx`、`workspace-header.tsx` 输出一版可执行的重构拆分方案，不直接改业务代码。
+- 技能使用：本轮按要求采用 `brainstorming` 与 `writing-plans` 思路，先明确作者任务流，再转成可执行阶段。
+- 上下文证据：
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/editor-workspace.tsx:204` 之后集中声明大量场景、写作、版本、上下文、诊断状态，说明总控容器职责过载。
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/writing-pane.tsx:109` 附近暴露 `workflowProviderMode` 和 `smoke fixture` 选择，说明写作主路径混入调试参数。
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/writing-pane.tsx:179` 存在“一键跑全流程”，需要重新定义其作者语义或迁入诊断台。
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/sidebar-panels.tsx:129` 与 `:170` 显示默认右栏直接挂载 `Workflow Debug`、`Provider Matrix`，确认作者侧栏与开发诊断台混杂。
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/versions-pane.tsx:215` 保留“采纳这条支线”等作者相关能力，适合保留但需作者化表达。
+- 方案结论：
+  - 信息架构拆为作者工作台、版本与分支区、上下文侧栏、开发诊断台四层。
+  - 状态域拆为 `authoring`、`versioning`、`context`、`diagnostics` 四域。
+  - 实施顺序定为：右栏拆分 → 总控状态域拆分 → 写作面板收缩 → 版本分支文案整理。
+- 留痕文件：新增 `D:/WritierLab/.codex/context-summary-editor-workspace-refactor-plan.md` 记录本轮方案依据与执行建议。
+## 2026-04-04 编辑器工作台重构设计文档落地
+
+- 任务目标：将已确认的“作者工作台与运行诊断工作台彻底分离”方案沉淀为仓库内正式规格文档，作为后续 implementation plan 的直接输入。
+- 已使用的上下文证据：
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/editor-workspace.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/writing-pane.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/sidebar-panels.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/versions-pane.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/use-editor-runtime-workbench.ts`
+- 关键决策：
+  - 采用一次性重构到位，而不是分阶段兼容旧工作台。
+  - 运行诊断能力完全迁出编辑器，而不是保留为折叠侧栏或二级入口。
+  - 优先复用 `workspace-header.tsx`、`versions-pane.tsx`、`use-editor-runtime-workbench.ts`，避免重复造轮子。
+- 文档输出：
+  - 新增 `D:/WritierLab/docs/superpowers/specs/2026-04-04-editor-workspace-refactor-design.md`
+- 自审结论：
+  - 已补齐目标、非目标、模块边界、状态域、数据流、实施顺序、风险与验收标准。
+  - 已移除占位项与模糊表述，文档可直接承接后续实现计划。
+## 2026-04-06 编辑器工作台重构实现收口
+
+时间：2026-04-06
+
+### 任务
+
+- 完成 `WriterLab-v1/Next.js/frontend` 下编辑器工作台重构的当前未提交实现
+- 让作者默认工作台与运行诊断能力彻底分离
+- 补齐本地结构验证、类型检查与定向 lint 留痕
+
+### 编码前检查
+
+- 已查阅上下文摘要文件：`D:/WritierLab/.codex/context-summary-editor-workspace-refactor-plan.md`
+- 将使用以下可复用组件：
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/runtime/runtime-debug-workbench.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/context-sidebar.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/writing-pane.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/versions-pane.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/editor-workspace-structure.test.mjs`
+- 将遵循命名约定：延续 `features/editor` 下组件命名与 `hooks/*` 状态域拆分方式
+- 将遵循代码风格：保持函数组件、Tailwind 原子类、`node:test + typecheck + eslint` 定向验证
+- 确认不重复造轮子：已检查 `features/runtime/runtime-debug-workbench.tsx`，确认运行诊断已有独立承接实现，无需在 editor 下再造一套 diagnostics UI
+
+### 上下文检索与结论
+
+- 读取了 `editor-workspace.tsx`、`writing-pane.tsx`、`versions-pane.tsx`、`workspace-header.tsx`、`context-sidebar.tsx`，确认作者路径已初步拆分，但总控容器仍残留大量未使用 diagnostics 状态和工作流调试逻辑
+- 读取了 `features/runtime/runtime-debug-workbench.tsx`，确认 `Workflow Debug`、`Provider Runtime`、`Smoke Console`、`Provider Matrix`、`Context Compiler` 已有独立工作台承接
+- 读取了 `tests/features/editor-workspace-structure.test.mjs`，确认当前契约是：`workspace-header.tsx` 保留“写作台与分支工作区”，`context-sidebar.tsx` 只保留作者侧栏区块，`writing-pane.tsx` 不再暴露运行诊断 props
+- 读取了 `package.json`、`tsconfig.json` 与 `tests/README.md`，确认本轮前端验证入口应为结构测试、`npm.cmd run typecheck` 与定向 `eslint`
+
+### TDD 与验证过程
+
+- 先执行 `node --test D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/editor-workspace-structure.test.mjs`
+  - 首次在沙箱内失败，原因是 `node --test` 子进程触发 `spawn EPERM`
+  - 这属于沙箱限制而非业务断言失败，因此先改代码、再提权补跑结构测试
+- 修改完成后重新执行：
+  - `npm.cmd run typecheck` 通过
+  - `npx.cmd eslint features/editor/editor-workspace.tsx features/editor/writing-pane.tsx features/editor/workspace-header.tsx features/editor/context-sidebar.tsx features/editor/hooks/use-authoring-workspace.ts features/editor/hooks/use-scene-context.ts features/editor/hooks/use-versioning-workspace.ts tests/features/editor-workspace-structure.test.mjs` 通过
+  - 提权执行 `node --test D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/editor-workspace-structure.test.mjs` 通过
+
+### 实际改动
+
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/workspace-header.tsx`
+  - 恢复作者工作台中文标题与按钮文案
+  - 明确说明运行诊断能力已迁往独立入口
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/writing-pane.tsx`
+  - 重写作者写作区中文文案
+  - 保持分析、扩写、润色、采纳与丢弃流程
+  - 继续确保不暴露运行诊断相关 props
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/editor-workspace.tsx`
+  - 重写为纯作者工作台装配层
+  - 删除 `useEditorRuntimeWorkbench`、workflow debug、provider runtime、smoke report 等残留 diagnostics 状态和死代码
+  - 保留场景加载、分析提示、扩写、润色、版本恢复、分支创建/采纳、一致性扫描、VN 导出等作者工作流
+  - 将头部 `workflowStatusLabel` 收敛为“已迁往诊断台”，不再由 editor 入口维护运行诊断状态
+
+### 编码后声明
+
+#### 1. 复用了以下既有组件
+
+- `runtime-debug-workbench.tsx`：继续作为运行诊断独立承接页
+- `context-sidebar.tsx`：继续承接分析、一致性、记忆上下文与 VN 导出
+- `versions-pane.tsx`：继续承接版本与分支能力
+- `useAuthoringWorkspace`、`useSceneContext`、`useVersioningWorkspace`：继续作为 editor 状态域拆分基础
+
+#### 2. 遵循了以下项目约定
+
+- 命名约定：继续沿用 `features/editor/*` 与 `hooks/*` 组织方式
+- 代码风格：继续使用函数组件、Tailwind 原子类、局部 helper 函数和显式 API 调用
+- 文件组织：没有新建平行 editor/runtime 体系，而是复用已有 runtime workbench
+
+#### 3. 对比了以下相似实现
+
+- `runtime-debug-workbench.tsx`：诊断能力继续留在独立工作台，不再回灌到编辑器默认入口
+- `context-sidebar.tsx`：保留作者侧栏能力，不混入旧诊断区块标题
+- `editor-workspace-structure.test.mjs`：按测试契约收口 `workspace-header.tsx`、`writing-pane.tsx` 和 `context-sidebar.tsx`
+
+#### 4. 未重复造轮子的证明
+
+- 已检查 `features/runtime/runtime-debug-workbench.tsx`，确认系统已有独立 diagnostics 工作台
+- 已检查 `features/editor/*` 现有 hook 拆分，继续沿用而不是新增平行 store 或容器
+- 已检查结构测试，直接用既有测试契约驱动收口，而不是另建第二套验证逻辑
+
+### 本地验证结果
+
+- `npm.cmd run typecheck`
+  - 通过
+- `npx.cmd eslint features/editor/editor-workspace.tsx features/editor/writing-pane.tsx features/editor/workspace-header.tsx features/editor/context-sidebar.tsx features/editor/hooks/use-authoring-workspace.ts features/editor/hooks/use-scene-context.ts features/editor/hooks/use-versioning-workspace.ts tests/features/editor-workspace-structure.test.mjs`
+  - 通过
+- `node --test D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/editor-workspace-structure.test.mjs`
+  - 通过（在沙箱外执行，原因是沙箱内会触发 `spawn EPERM`）
+
+### 残余风险
+
+- `context-sidebar.tsx`、`versions-pane.tsx` 等文件仍可能存在历史乱码文案，本轮优先收口作者工作台结构与验证闭环，没有扩大到全量文案清洗
+- 本轮没有重新跑 frontend live smoke 与生产构建；原因是改动集中在组件结构与文案、且当前任务的直接验收标准是结构契约、类型检查和定向 lint
+
+## 2026-04-06 前端活体验证补录
+
+时间：2026-04-06
+
+### 任务
+
+- 启动前端开发服务器，补跑 live smoke
+- 修正 `/runtime` 页面缺失的 smoke 路由标记
+- 将页面级验证结果补录到 `.codex` 留痕
+
+### 过程记录
+
+- 首次执行 `node D:/WritierLab/WriterLab-v1/scripts/frontend_live_smoke.mjs http://127.0.0.1:3000`
+  - 失败原因：`127.0.0.1:3000` 没有前端进程，全部路由 `ECONNREFUSED`
+- 随后尝试启动前端时误在 `D:/WritierLab` 执行 `npm.cmd run dev`
+  - 失败原因：根目录缺少 `package.json`
+- 改为在 `D:/WritierLab/WriterLab-v1/Next.js/frontend` 正确启动 `npm.cmd run dev`
+  - `next dev` 正常 ready，`/editor`、`/project`、`/project/new`、`/lore`、`/runtime`、`/settings` 均返回 200
+- 再次执行 live smoke
+  - 仅 `/runtime` 失败，缺少路由标记：`运行时就绪度`、`运行时自检告警`
+- 修改 `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/runtime/runtime-debug-workbench.tsx`
+  - 把运行页描述和区块标题对齐为中文 smoke 标记
+  - 将 `Provider Runtime` 收敛为 `运行时就绪度`
+  - 将空状态提示收敛为 `运行时自检告警：尚未加载运行时数据。`
+- 第三次执行 live smoke
+  - 6 条路由全部通过
+
+### 本地验证结果补充
+
+- `node D:/WritierLab/WriterLab-v1/scripts/frontend_live_smoke.mjs http://127.0.0.1:3000`
+  - 通过（6 条路由）
+- `powershell -ExecutionPolicy Bypass -File D:/WritierLab/WriterLab-v1/scripts/check-frontend.ps1`
+  - `typecheck` 通过
+  - 生产构建检查命中已知 Windows 受限壳层 caveat，脚本已按环境限制处理，未暴露新的类型错误
+
+### 当前状态
+
+- 编辑器工作台重构实现、主路径乱码清理、结构测试、typecheck、定向 eslint 与 frontend live smoke 均已完成
+- 当前仍可继续考虑清理 `features/runtime/*` 内更多遗留英文/乱码文案，但这不再阻塞本轮交付

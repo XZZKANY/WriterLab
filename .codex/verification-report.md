@@ -168,3 +168,232 @@ score: 92
   - 留痕与验证步骤完整，且没有干扰正在进行的代码修改
 
 summary: '已将根 README 升级为仓库级中文项目文档，并新增本轮 context summary、操作记录与审查留痕；文档内容基于现有 README、docs、脚本、测试索引和依赖文件整理，路径与命令已完成核对，当前可判定为通过。'
+
+## 2026-04-02 删除项目网络错误修复审查报告
+
+生成时间：2026-04-02 18:33:26
+
+### 需求与范围核对
+
+- 目标：修复删除项目时直接显示浏览器原始 `Failed to fetch` 的问题
+- 范围：仅调整前端统一 API client 与定向回归测试，不改后端删除逻辑
+- 交付物：
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/client.ts`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - `D:/WritierLab/.codex/context-summary-delete-project-network-error.md`
+  - `D:/WritierLab/.codex/operations-log.md`
+- 审查要点：网络异常是否被统一包装、现有 204 与 JSON 错误逻辑是否保持、验证是否本地完成
+
+### 技术维度评分
+
+- **代码质量：93/100**
+  - 修复点集中在统一请求封装，侵入面小
+  - 新增 `formatNetworkErrorMessage()` 与既有小函数风格一致
+- **测试覆盖：95/100**
+  - 新增网络失败分支测试
+  - 已回归既有 JSON 错误和 204 成功场景
+- **规范遵循：92/100**
+  - 变更与留痕均使用简体中文
+  - 本地验证步骤完整且可重复执行
+
+### 战略维度评分
+
+- **需求匹配：95/100**
+  - 直接解决用户在删除项目时看到原始网络报错的问题
+  - 未偏题到后端删除仓储重构
+- **架构一致：94/100**
+  - 延续现有 `client.ts` 统一入口，而非在页面组件打补丁
+  - 与 `project-hub.tsx`、`lore-hub.tsx` 的共享错误消费模式一致
+- **风险评估：90/100**
+  - 已明确这是“错误提示修复”而非“环境自修复”
+  - 保留了 API 基址信息，便于继续排查运行环境
+
+### 综合评分
+
+```Scoring
+score: 94
+```
+
+### 结论
+
+- **建议：通过**
+- **理由**：修复点准确命中网络异常路径，新增回归测试可稳定复现和验证问题，且未破坏现有响应解析与成功分支。
+
+summary: '已在统一 API client 中捕获 fetch 网络异常，把删除项目等场景中的浏览器原始 Failed to fetch 包装为带 API 基址的中文提示；新增回归测试并完成本地 typecheck 与 eslint 验证，当前可判定为通过。'
+
+## 2026-04-02 删除项目代理规避修复补充审查
+
+- 运行态证据表明后端删除接口正常，问题集中在浏览器直连后端的访问路径。
+- 已将浏览器默认 API 路径收敛为前端同源 `/api` 代理，并通过 Next rewrite 转发到后端。
+- 本轮补充验证：
+  - `node --experimental-strip-types --test D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - `npm run typecheck`
+  - `npx eslint lib/api/client.ts next.config.ts tests/features/api-client.test.mjs`
+  - `npm run build:node`
+- 结论：代理规避方案已通过本地验证，可用于解决浏览器删除项目时的连接失败问题；剩余操作是重启前端让 rewrite 生效。
+
+## 2026-04-02 删除项目 500 修复补充审查
+
+- 结论：当前删除项目的真实 500 根因已经定位并修复，属于后端删除顺序中的外键清理遗漏，而非前端代理或连接问题。
+- 核心证据：`SceneVersion.workflow_step_id -> WorkflowStep.id` 外键在删 `WorkflowStep` 时触发 `ForeignKeyViolation`；修复后同一复现场景可成功删除。
+- 本轮验证：
+  - `D:/WritierLab/WriterLab-v1/.venv/Scripts/python.exe -m pytest D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_project_repository.py -q`
+  - `D:/WritierLab/WriterLab-v1/.venv/Scripts/python.exe -m pytest D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_api_routes.py -q`
+  - 真实数据库复现脚本通过
+- 结论建议：通过。当前只需用户刷新页面后重新尝试删除目标项目。
+## 2026-04-04 编辑器工作台重构设计审查报告
+
+生成时间：2026-04-04
+
+### 技术维度评分
+
+- 代码质量：93/100
+  - 设计以现有组件重组为主，没有引入新的并行体系。
+  - 明确将 `editor-workspace` 收缩为装配层，降低单组件复杂度。
+- 测试覆盖：88/100
+  - 本轮仅输出设计文档，尚未执行代码级测试。
+  - 已在设计中明确后续本地验证清单和 smoke 更新要求。
+- 规范遵循：96/100
+  - 文档、日志和审查内容均使用简体中文。
+  - 设计结论全部基于现有代码证据和用户确认结果。
+
+### 战略维度评分
+
+- 需求匹配：97/100
+  - 完整响应“体验与架构一起重构”“诊断能力完全迁出编辑器”“一次性重构到位”三项关键决策。
+- 架构一致：95/100
+  - 沿用现有 feature 目录、路由装配模式和已有 hook/API 资产。
+  - 复用 `workspace-header`、`versions-pane`、`use-editor-runtime-workbench`，避免重复设计。
+- 风险评估：94/100
+  - 已识别状态拆分、刷新时序、入口迁移和 smoke 回归四类主要风险。
+  - 给出实施顺序和验收标准以控制一次性重构风险。
+
+### 综合评分
+
+```Scoring
+score: 94
+```
+
+### 结论
+
+- 建议：通过
+- 理由：
+  - 设计边界清晰，已明确作者工作台与运行诊断工作台的职责分离。
+  - 文档内容完整，可直接作为后续 implementation plan 的输入。
+  - 风险和验证要求已留痕，但由于尚未进入实现阶段，后续计划仍需补全刷新矩阵与具体任务拆分。
+
+summary: '已完成编辑器工作台重构设计规格文档，明确作者工作台与运行诊断工作台分离的目标结构、模块边界、状态域、数据流、实施顺序、风险与验收标准；当前审查结论为通过，可进入后续实现计划编写阶段。'
+## 2026-04-06 编辑器工作台重构实现审查报告
+
+生成时间：2026-04-06
+
+### 审查范围
+
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/editor-workspace.tsx`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/writing-pane.tsx`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/workspace-header.tsx`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/editor/context-sidebar.tsx`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/editor-workspace-structure.test.mjs`
+
+### 需求映射
+
+- **作者默认工作台与运行诊断能力分离**：已完成，`editor-workspace.tsx` 不再持有运行诊断工作台状态与入口逻辑
+- **保留作者工作流核心能力**：已完成，保留写作、分析、扩写、润色、版本恢复、分支创建/采纳、一致性扫描与 VN 导出
+- **复用现有运行诊断承接实现**：已完成，继续复用 `features/runtime/runtime-debug-workbench.tsx`
+- **补齐本地验证**：已完成，结构测试、typecheck 与定向 eslint 均已通过
+
+### 技术维度评分
+
+- **代码质量：94/100**
+  - `editor-workspace.tsx` 从残留 diagnostics 的混合容器收敛为作者工作台装配层
+  - 删除了已与 UI 脱节的运行诊断死代码，降低维护面
+- **测试覆盖：91/100**
+  - 结构测试直接验证作者工作台契约
+  - `typecheck` 与定向 `eslint` 证明接口与实现已收口
+- **规范遵循：96/100**
+  - 新增和修复的文案统一使用简体中文
+  - 继续沿用现有 feature 目录、hook 状态域与本地验证方式
+
+### 战略维度评分
+
+- **需求匹配：95/100**
+  - 直接完成“作者默认工作台不再泄漏运行诊断能力”的核心目标
+  - 保持作者路径可用，没有为了分离而牺牲写作主流程
+- **架构一致：95/100**
+  - 沿用现有 `features/editor` 与 `features/runtime` 的职责边界
+  - 复用现成 runtime 工作台，而不是新建平行 diagnostics 页面
+- **风险评估：89/100**
+  - 当前残余风险主要是历史乱码文案尚未全量清理
+  - 本轮未重新跑 live smoke 与生产构建，因此对端到端页面回归的覆盖仍有限
+
+### 综合评分
+
+```Scoring
+score: 93
+```
+
+### 结论
+
+- 建议：通过
+- 理由：
+  - 结构契约测试已通过，直接证明作者工作台与旧诊断泄漏点分离成功
+  - `typecheck` 与定向 `eslint` 已通过，说明当前实现可在现有代码风格和类型约束下稳定落地
+  - 诊断能力已有独立承接位置，当前调整符合既有架构方向
+
+summary: '已完成编辑器工作台重构实现收口：`workspace-header.tsx` 与 `writing-pane.tsx` 恢复作者工作台中文语义，`editor-workspace.tsx` 重写为纯作者工作台装配层并移除运行诊断残留，继续复用独立 `runtime-debug-workbench.tsx` 承接 diagnostics；结构测试、typecheck 与定向 eslint 均通过，当前可判定为通过。'
+
+## 2026-04-06 前端活体验证补充审查
+
+生成时间：2026-04-06
+
+### 审查范围
+
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/runtime/runtime-debug-workbench.tsx`
+- `D:/WritierLab/WriterLab-v1/scripts/frontend_live_smoke.mjs`
+- 前端开发服务器运行态与 6 条页面路由 smoke 结果
+
+### 需求映射
+
+- **启动前端并补跑 live smoke**：已完成
+- **修正 `/runtime` 页面路由标记缺失**：已完成
+- **补齐页面级验证闭环**：已完成
+
+### 技术维度评分
+
+- **代码质量：92/100**
+  - 修复点集中在运行页文案标记，变更面很小
+  - 没有引入新状态或新逻辑，仅把 UI 语义对齐 smoke 预期
+- **测试覆盖：95/100**
+  - live smoke 已覆盖 `/editor`、`/project`、`/project/new`、`/lore`、`/runtime`、`/settings`
+  - 结构测试、typecheck 与定向 eslint 已在前置步骤完成
+- **规范遵循：95/100**
+  - 运行页新增标记统一使用简体中文
+  - 验证路径与现有脚本入口保持一致
+
+### 战略维度评分
+
+- **需求匹配：94/100**
+  - 直接解决了页面级验证最后一个阻塞项
+  - 证明本轮重构没有破坏编辑器与运行页的可访问性
+- **架构一致：93/100**
+  - 继续复用现有 runtime workbench，不新增任何平行页面
+  - 只修正文案标记，不改变运行页模块边界
+- **风险评估：90/100**
+  - 当前页面级 smoke 已转绿，主要剩余风险转为运行页内部更深层的交互验证未覆盖
+  - `check-frontend.ps1` 的 build 仍受 Windows 受限壳层 caveat 影响，但未暴露新的类型失败
+
+### 综合评分
+
+```Scoring
+score: 94
+```
+
+### 结论
+
+- 建议：通过
+- 理由：
+  - 前端开发服务器已在正确目录启动，6 条路由 live smoke 全部通过
+  - `/runtime` 的 smoke 失败已通过最小修复收口，没有扩大改动面
+  - 当前本轮任务已同时具备源码级、类型级、结构级和页面级验证证据
+
+summary: '已补齐前端页面级验证：在正确目录启动 `next dev` 后，修复 `/runtime` 页面缺失的中文 smoke 标记，使 frontend live smoke 的 6 条路由全部通过；结合此前已通过的结构测试、typecheck 与定向 eslint，当前这轮编辑器工作台重构可判定为通过。'
