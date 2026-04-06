@@ -22,9 +22,9 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
 
     fake_project = SimpleNamespace(
         id=project_id,
-        name="项目概览烟雾测试",
-        description="用于锁定项目概览接口契约",
-        genre="悬疑",
+        name="????????",
+        description="????????????",
+        genre="??",
         default_language="zh-CN",
         created_at=now,
         updated_at=now,
@@ -33,8 +33,8 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
     fake_book = SimpleNamespace(
         id=book_id,
         project_id=project_id,
-        title="第一卷",
-        summary="项目概览中的图书",
+        title="???",
+        summary="????????",
         status="active",
         created_at=now,
         updated_at=now,
@@ -43,8 +43,8 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
         id=chapter_id,
         book_id=book_id,
         chapter_no=1,
-        title="第一章",
-        summary="项目概览中的章节",
+        title="???",
+        summary="????????",
         status="active",
         created_at=now,
         updated_at=now,
@@ -53,7 +53,7 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
         id=scene_id,
         chapter_id=chapter_id,
         scene_no=1,
-        title="第一场",
+        title="???",
         status="draft",
         created_at=now,
         updated_at=now,
@@ -109,9 +109,9 @@ def test_project_overview_endpoint_returns_full_contract(monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["project"]["id"] == str(project_id)
-    assert payload["project"]["name"] == "项目概览烟雾测试"
+    assert payload["project"]["name"] == "????????"
     assert payload["books"][0]["id"] == str(book_id)
-    assert payload["books"][0]["title"] == "第一卷"
+    assert payload["books"][0]["title"] == "???"
     assert payload["chapters_by_book"][str(book_id)][0]["id"] == str(chapter_id)
     assert payload["chapters_by_book"][str(book_id)][0]["chapter_no"] == 1
     assert payload["scenes_by_chapter"][str(chapter_id)][0]["id"] == str(scene_id)
@@ -147,7 +147,7 @@ def test_update_scene_version_mismatch_returns_409(monkeypatch):
         id=scene_id,
         chapter_id=UUID("11111111-1111-1111-1111-111111111111"),
         scene_no=1,
-        title="版本冲突场景",
+        title="??????",
         pov_character_id=None,
         location_id=None,
         time_label=None,
@@ -157,7 +157,7 @@ def test_update_scene_version_mismatch_returns_409(monkeypatch):
         must_include=None,
         must_avoid=None,
         status="draft",
-        draft_text="初始文本",
+        draft_text="????",
         scene_version=2,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
@@ -175,10 +175,10 @@ def test_update_scene_version_mismatch_returns_409(monkeypatch):
             return _FakeQuery()
 
         def commit(self):
-            raise AssertionError("版本冲突时不应提交数据库")
+            raise AssertionError("????????????")
 
         def refresh(self, obj):
-            raise AssertionError("版本冲突时不应刷新对象")
+            raise AssertionError("???????????")
 
     app.dependency_overrides[get_db] = lambda: _FakeDB()
     monkeypatch.setattr("app.api.scenes.create_scene_version", lambda *args, **kwargs: None)
@@ -188,10 +188,10 @@ def test_update_scene_version_mismatch_returns_409(monkeypatch):
     response = client.patch(
         f"/api/scenes/{scene_id}",
         json={
-            "draft_text": "更新后的文本",
+            "draft_text": "??????",
             "expected_scene_version": 1,
             "version_source": "manual",
-            "version_label": "手动更新",
+            "version_label": "????",
         },
     )
 
