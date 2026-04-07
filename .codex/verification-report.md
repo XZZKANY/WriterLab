@@ -453,3 +453,205 @@ score: 93
   - 当前唯一显式限制是受限 shell 的 `node --test` 环境问题，不是本轮代码回归
 
 summary: '已完成 phase-1 收尾留痕：项目概览契约、项目详情接线、删除网络错误提示与浏览器同源代理在当前代码状态下已完成 fresh verification；根 operations-log 与中期蓝图规格已补录阶段一实施状态。后端契约测试、前端源码级测试和 typecheck 均通过，唯一限制是当前 Windows 受限环境下 `node --test` 仍会触发 `spawn EPERM`。'
+
+## 2026-04-07 阶段二资料域后端 CRUD 合同收口审查报告
+
+生成时间：2026-04-07 19:55:00
+
+### 审查范围
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/app/api/lore_entries.py`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/app/api/characters.py`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/app/api/locations.py`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/app/repositories/lore_repository.py`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/app/schemas/lore_entry.py`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_lore_domain_contracts.py`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_project_scene_contracts.py`
+
+### 需求映射
+- **补齐 lore entry 明细/更新/删除合同**：已完成。
+- **保持资料域后端边界一致**：已完成，继续沿用 `router + repository + schema`。
+- **本地验证 lore 域合同与 phase-1 回归**：已完成。
+
+### 技术维度评分
+- **代码质量：94/100**
+  - 本轮只在缺口路由做最小补丁，没有扩大改动面。
+  - 复用既有 repository 与 schema，没有引入平行实现。
+- **测试覆盖：95/100**
+  - `test_lore_domain_contracts.py` 已从红灯转为 `11 passed`。
+  - `test_project_scene_contracts.py` 继续 `3 passed`，证明 phase-1 未回归。
+- **规范遵循：94/100**
+  - 404 文案与路由组织方式与 `characters`、`locations` 保持一致。
+  - 日志与审查文本继续使用简体中文。
+
+### 战略维度评分
+- **需求匹配：94/100**
+  - 直接完成阶段二首轮后端合同的最后缺口，没有越界扩展 Terminology。
+- **架构一致：93/100**
+  - 沿用现有 FastAPI 资源路由模式和 repository 辅助函数设计。
+- **风险评估：90/100**
+  - 当前主要剩余风险不在后端合同，而在阶段二前端仍未消费这些新接口。
+
+### 综合评分
+
+```Scoring
+score: 93
+```
+
+### 结论
+- **建议：通过**
+- **理由**：
+  - lore 域合同测试已全绿，且回归测试继续通过。
+  - 实现严格限制在既有架构边界内，复用充分，风险可控。
+  - 当前可以把下一步工作转向阶段二前端接线，而不是继续补后端平行层。
+
+summary: '已完成阶段二资料域后端首轮 CRUD 合同收口：补齐 lore entry 明细、更新、删除路由，并在当前代码状态下通过 `test_lore_domain_contracts.py`（11 passed）与 `test_project_scene_contracts.py`（3 passed）验证。实现继续沿用 `router + repository + schema` 边界，建议通过并进入阶段二前端接线。'
+
+## 2026-04-07 阶段二 lore 前端最小接线审查报告
+
+生成时间：2026-04-07 20:16:01
+
+### 审查范围
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/lore.ts`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-hub.tsx`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+
+### 需求映射
+- **补 lore 前端最小 API 客户端合同**：已完成。
+- **保持 lore 页面继续通过共享 API client 取数**：已完成。
+- **新增前端 lore 结构契约测试并本地验证**：已完成。
+
+### 技术维度评分
+- **代码质量：93/100**
+  - lore API 已按现有 `lib/api/*` 模式统一到共享 client 上。
+  - 页面只做类型对齐，没有引入额外状态机或平行抽象。
+- **测试覆盖：94/100**
+  - 新增 `lore-domain-contract.test.mjs` 并从红灯转绿。
+  - 共享 `api-client.test.mjs` 与 `typecheck` 继续通过。
+- **规范遵循：95/100**
+  - 请求继续集中在 `lib/api/lore.ts`，没有页面层直连接口。
+  - 文档、日志和审查文本继续使用简体中文。
+
+### 战略维度评分
+- **需求匹配：93/100**
+  - 本轮聚焦阶段二 Task 3，没有越界到编辑工作台或 Terminology 扩展。
+- **架构一致：94/100**
+  - 继续沿用 `lib/api/* + features/*` 分层，并让 lore 页面消费共享类型和函数。
+- **风险评估：90/100**
+  - 当前剩余风险是页面尚无实际编辑交互，但共享合同已为下一步铺好路径。
+
+### 综合评分
+
+```Scoring
+score: 93
+```
+
+### 结论
+- **建议：通过**
+- **理由**：
+  - lore 前端共享 API 合同已补齐，并有结构契约测试与 typecheck 作为证据。
+  - 页面依旧维持简洁只读消费，不引入额外复杂度。
+  - 当前最合理的后续工作是基于这些合同做最小 detail / edit 交互，而不是继续扩数据域。
+
+summary: '已完成阶段二 lore 前端最小接线：`lib/api/lore.ts` 补齐三域 detail、create、update、delete 共享合同，`lore-library-page.tsx` 与 `lore-hub.tsx` 改为复用共享 lore 类型，新增 `lore-domain-contract.test.mjs` 并在当前代码状态下通过；结合 `api-client.test.mjs` 和 `npm.cmd run typecheck`，本轮可判定为通过。'
+
+## 2026-04-07 子代理推进 - lore 子页最小 detail/edit 交互审查报告
+
+生成时间：2026-04-07 20:36:58
+
+### 审查范围
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/lore.ts`
+- 两个 explorer 子代理的探索结论
+
+### 需求映射
+- **按子代理流程推进**：已完成，两个 explorer 先并行收集证据，主线程整合实现。
+- **为 lore 子页补最小 detail/edit 交互**：已完成。
+- **继续复用共享 lore API，避免平行架构**：已完成。
+- **本地验证**：已完成。
+
+### 技术维度评分
+- **代码质量：94/100**
+  - 交互仅收敛在 `lore-library-page.tsx`，改动面小且可读性保持稳定。
+  - 保存逻辑直接复用共享 lore API，没有引入新的请求层。
+- **测试覆盖：93/100**
+  - `lore-domain-contract.test.mjs` 已锁定编辑状态与共享更新路径。
+  - `api-client.test.mjs` 与 `typecheck` 继续通过。
+- **规范遵循：95/100**
+  - 子代理工作流有日志留痕，输出和文档继续使用简体中文。
+  - 页面挂载层、共享 API 层和现有 UI 容器边界均保持一致。
+
+### 战略维度评分
+- **需求匹配：94/100**
+  - 精确承接 phase-2 下一步，没有把范围扩散到 Terminology 或新工作台。
+- **架构一致：95/100**
+  - 子代理建议和主线程实现都严格保持 `lib/api/* + features/*` 分层。
+- **风险评估：90/100**
+  - 当前仍是最小编辑交互，未覆盖 create/delete 和更深层字段，但这些属于后续增强而非本轮缺陷。
+
+### 综合评分
+
+```Scoring
+score: 94
+```
+
+### 结论
+- **建议：通过**
+- **理由**：
+  - 子代理并行探索后，主线程选择了最小且一致的落地方案。
+  - 新交互已具备自动化验证与类型验证证据。
+  - 当前结果为后续 lore 扩展留下清晰增量路径，没有引入技术债扩散。
+
+summary: '已按子代理流程完成 lore 子页最小 detail/edit 交互：两个 explorer 先并行确认最小接入点和可复用 UI 模式，主线程随后在 `lore-library-page.tsx` 内实现“左侧列表 + 右侧资料详情/编辑卡”，并继续复用共享 `update*` 客户端保存。当前 `lore-domain-contract.test.mjs` 通过 3 项、`api-client.test.mjs` 通过 4 项、`npm.cmd run typecheck` 通过，建议通过。'
+
+## 2026-04-07 子代理推进 - lore 子页最小 create/delete 交互审查报告
+
+生成时间：2026-04-07 21:22:32
+
+### 审查范围
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/lore.ts`
+- explorer A 结论与主线程本地删除模式补证
+
+### 需求映射
+- **按子代理流程推进**：已完成。
+- **补 lore 子页最小 create/delete 交互**：已完成。
+- **继续复用共享 lore API、避免平行架构**：已完成。
+- **本地验证**：已完成。
+
+### 技术维度评分
+- **代码质量：94/100**
+  - create/delete 与既有 detail/edit 完整收敛在同一个页面组件内，边界清晰。
+  - 删除确认与新建表单都采用现有轻量模式，没有引入额外复杂度。
+- **测试覆盖：94/100**
+  - `lore-domain-contract.test.mjs` 已从红灯转绿并覆盖 create/delete 结构契约。
+  - `api-client.test.mjs` 和 `typecheck` 继续通过。
+- **规范遵循：95/100**
+  - 继续使用共享 API 客户端与项目内既有轻量删除模式。
+  - 子代理流程与本地补证过程都已留痕。
+
+### 战略维度评分
+- **需求匹配：94/100**
+  - 正好承接上一轮 detail/edit 的下一步，形成 lore 子页最小 CRUD 闭环。
+- **架构一致：95/100**
+  - 仍严格保持 `lib/api/* + features/*` 分层，不扩到新页面或新服务层。
+- **风险评估：91/100**
+  - 当前仍是最小交互，后续若追求更强可用性，可再补真实组件级交互测试，但这不阻塞本轮结论。
+
+### 综合评分
+
+```Scoring
+score: 94
+```
+
+### 结论
+- **建议：通过**
+- **理由**：
+  - lore 子页已形成最小 create/detail/edit/delete 闭环，并有结构测试与类型检查证据。
+  - 子代理探索与主线程实现都保持了最小改动和架构一致性。
+  - 当前适合进入提交整理或下一轮更细字段扩展，而不是重构架构。
+
+summary: '已按子代理流程完成 lore 子页最小 create/delete 交互：在 `lore-library-page.tsx` 内补齐“新建资料 / 删除当前”，继续复用共享 `create* / delete*` 客户端和轻量 `window.confirm` 删除模式；当前 `lore-domain-contract.test.mjs` 通过 4 项，`api-client.test.mjs` 通过 4 项，`npm.cmd run typecheck` 通过，建议通过。'

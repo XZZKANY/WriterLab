@@ -9,9 +9,11 @@ class LocationCreate(BaseModel):
     name: str
     description: str | None = None
 
+
 class LocationUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
+
 
 class LocationResponse(BaseModel):
     id: UUID
@@ -22,3 +24,8 @@ class LocationResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LocationDeleteResponse(BaseModel):
+    deleted: bool
+    location_id: UUID

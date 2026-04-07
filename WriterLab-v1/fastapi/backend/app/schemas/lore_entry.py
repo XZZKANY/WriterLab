@@ -13,6 +13,14 @@ class LoreEntryCreate(BaseModel):
     canonical: bool = True
 
 
+class LoreEntryUpdate(BaseModel):
+    category: str | None = None
+    title: str | None = None
+    content: str | None = None
+    priority: int | None = None
+    canonical: bool | None = None
+
+
 class LoreEntryResponse(BaseModel):
     id: UUID
     project_id: UUID
@@ -25,3 +33,8 @@ class LoreEntryResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LoreEntryDeleteResponse(BaseModel):
+    deleted: bool
+    lore_entry_id: UUID

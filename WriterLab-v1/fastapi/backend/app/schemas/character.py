@@ -17,6 +17,18 @@ class CharacterCreate(BaseModel):
     secrets: str | None = None
 
 
+class CharacterUpdate(BaseModel):
+    name: str | None = None
+    aliases: str | None = None
+    appearance: str | None = None
+    personality: str | None = None
+    background: str | None = None
+    motivation: str | None = None
+    speaking_style: str | None = None
+    status: str | None = None
+    secrets: str | None = None
+
+
 class CharacterResponse(BaseModel):
     id: UUID
     project_id: UUID
@@ -33,3 +45,8 @@ class CharacterResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CharacterDeleteResponse(BaseModel):
+    deleted: bool
+    character_id: UUID

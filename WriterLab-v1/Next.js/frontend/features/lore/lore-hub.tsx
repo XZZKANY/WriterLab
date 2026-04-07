@@ -2,38 +2,25 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { fetchLoreEntries, fetchCharacters, fetchLocations } from "@/lib/api/lore";
-import { fetchProjects } from "@/lib/api/projects";
+import {
+  fetchLoreEntries,
+  fetchCharacters,
+  fetchLocations,
+  type CharacterResponse,
+  type LocationResponse,
+  type LoreEntryResponse,
+} from "@/lib/api/lore";
+import { fetchProjects, type ProjectResponse } from "@/lib/api/projects";
 import { AppShell } from "@/shared/ui/app-shell";
 import { InfoCard } from "@/shared/ui/info-card";
 
-type Project = {
-  id: string;
-  name: string;
-};
-
-type Character = {
-  id: string;
-  name: string;
-};
-
-type Location = {
-  id: string;
-  name: string;
-};
-
-type LoreEntry = {
-  id: string;
-  title: string;
-};
-
 export default function LoreHub() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [preferredProjectId, setPreferredProjectId] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [entries, setEntries] = useState<LoreEntry[]>([]);
+  const [characters, setCharacters] = useState<CharacterResponse[]>([]);
+  const [locations, setLocations] = useState<LocationResponse[]>([]);
+  const [entries, setEntries] = useState<LoreEntryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +37,7 @@ export default function LoreHub() {
 
     async function loadProjects() {
       try {
-        const payload = await fetchProjects<Project[]>();
+        const payload = await fetchProjects<ProjectResponse[]>();
         if (!cancelled) {
           setProjects(payload);
           setSelectedProjectId((current) => current || preferredProjectId || payload[0]?.id || "");
@@ -89,9 +76,9 @@ export default function LoreHub() {
     async function loadLore() {
       try {
         const [nextCharacters, nextLocations, nextEntries] = await Promise.all([
-          fetchCharacters<Character[]>(selectedProjectId),
-          fetchLocations<Location[]>(selectedProjectId),
-          fetchLoreEntries<LoreEntry[]>(selectedProjectId),
+          fetchCharacters(selectedProjectId),
+          fetchLocations(selectedProjectId),
+          fetchLoreEntries(selectedProjectId),
         ]);
         if (!cancelled) {
           setCharacters(nextCharacters);

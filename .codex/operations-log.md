@@ -581,3 +581,287 @@
 ### 当前状态
 - phase-1 的项目概览契约、项目详情接线、删除网络错误提示与浏览器同源代理均已有实现与 fresh verification
 - 阶段二到阶段四仍停留在蓝图或后续计划层，本轮未越界实现
+
+## 2026-04-07 阶段二资料域研究与计划
+
+- 目标：承接 phase-1 完成后的下一步，进入阶段二 / 资料域稳定化的上下文收集与 implementation plan 编写。
+- 已核对蓝图：`docs/superpowers/specs/2026-04-06-writerlab-multi-track-backend-first-design.md` 已把阶段二定义为 `Character / Lore / Location / Terminology` 资料域稳定化。
+- 运行态代码现状：
+  - `characters.py` 与 `lore_entries.py` 仅有 create + list。
+  - `locations.py` 额外具备 get + patch，是当前资料域里最完整的样板。
+  - `lore_repository.py` 只有 list 查询，没有统一写操作封装。
+  - 前端 `lib/api/lore.ts` 与 `features/lore/lore-library-page.tsx` 仅支持只读列表消费。
+- 测试现状：未找到资料域专用 pytest 契约测试，也未找到 lore 前端结构契约测试。
+- Gate 决策：阶段二首轮先稳定 `Character / Location / LoreEntry` 三域 CRUD，把 `Terminology` 是否独立建模保留为显式 Gate，而不是直接新造平行数据域。
+- 新增文件：
+  - `.codex/context-summary-phase2-lore-domain.md`
+  - `docs/superpowers/plans/2026-04-07-writerlab-phase-2-lore-domain-plan.md`
+- 下一步：从 `test_lore_domain_contracts.py` 的失败基线开始做阶段二 TDD。
+## 编码前检查 - 阶段二资料域后端失败基线
+
+时间：2026-04-07
+
+- 已查阅上下文摘要文件：`D:/WritierLab/.codex/context-summary-phase2-lore-domain.md`
+- 将使用以下可复用组件：
+  - `D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_project_scene_contracts.py`
+  - `D:/WritierLab/WriterLab-v1/fastapi/backend/tests/api/api_routes_suite.py`
+  - `D:/WritierLab/WriterLab-v1/fastapi/backend/app/api/locations.py`
+- 将遵循命名约定：后端测试继续使用 `test_*.py` 与 `test_<domain>_<behavior>` 风格。
+- 将遵循代码风格：继续使用 `FastAPI + TestClient + dependency_overrides + monkeypatch` 的契约测试写法。
+- 确认不重复造轮子：已检查 phase-1 契约测试、后端路由测试入口和当前资料域路由样板，决定新增独立的资料域契约测试文件，而不是扩散到无关 suite。
+## 2026-04-07 阶段二资料域后端失败基线
+
+- 新增 `D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_lore_domain_contracts.py`。
+- 复用了 `test_project_scene_contracts.py` 的 `FastAPI + TestClient + dependency_overrides + monkeypatch` 契约测试模式。
+- 当前红灯结果：`D:/WritierLab/WriterLab-v1/.venv/Scripts/python.exe -m pytest D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_lore_domain_contracts.py -q`
+  - 结果：`7 failed, 4 passed`
+  - 明确暴露的缺口：
+    - `DELETE /api/locations/{location_id}` 当前返回 `405`
+    - `GET/PATCH/DELETE /api/characters/{character_id}` 当前不存在，返回 `404`
+    - `GET/PATCH/DELETE /api/lore-entries/{entry_id}` 当前不存在，返回 `404`
+- 结论：阶段二后端资料域首轮应先补齐 Location delete，以及 Character / LoreEntry 的 detail、update、delete 契约。
+## 编码前检查 - 阶段二资料域后端最小 CRUD 实现
+
+时间：2026-04-07
+
+- 已查阅上下文摘要文件：`D:/WritierLab/.codex/context-summary-phase2-lore-domain.md`
+- 将使用以下可复用组件：
+  - `D:/WritierLab/WriterLab-v1/fastapi/backend/app/api/locations.py`
+  - `D:/WritierLab/WriterLab-v1/fastapi/backend/app/schemas/project.py`
+  - `D:/WritierLab/WriterLab-v1/fastapi/backend/app/repositories/lore_repository.py`
+- 将遵循命名约定：路由层保留 `get_* / update_* / delete_*` 命名，repository 层使用同名辅助函数，schema 沿用 `*Create / *Update / *Response / *DeleteResponse`。
+- 将遵循代码风格：继续使用 `db.query(...).filter(...).first()`、`payload.model_dump(exclude_unset=True)` 和 `HTTPException(status_code=404, detail=...)`。
+- 确认不重复造轮子：已检查项目删除响应、Location 现有 detail/update 写法与 lore_repository，共享逻辑将在资料域 repository 层扩展，不新建平行服务层。
+## 2026-04-07 阶段二资料域后端最小 CRUD 实现收口
+
+时间：2026-04-07 19:55:00
+
+### 实际改动
+- 补齐 `D:/WritierLab/WriterLab-v1/fastapi/backend/app/api/lore_entries.py` 的 `GET /api/lore-entries/{entry_id}`、`PATCH /api/lore-entries/{entry_id}`、`DELETE /api/lore-entries/{entry_id}`。
+- 继续复用 `D:/WritierLab/WriterLab-v1/fastapi/backend/app/repositories/lore_repository.py` 中已存在的 `get/update/delete_lore_entry` 辅助函数。
+- 继续复用 `D:/WritierLab/WriterLab-v1/fastapi/backend/app/schemas/lore_entry.py` 中已存在的 `LoreEntryUpdate` 与 `LoreEntryDeleteResponse`。
+
+### 编码后声明
+#### 1. 复用了以下既有组件
+- `app/api/characters.py`：复用 detail/update/delete 的路由组织模式。
+- `app/api/locations.py`：复用 404 语义与删除响应模式。
+- `app/repositories/lore_repository.py`：复用资料域 repository 层读写辅助函数。
+
+#### 2. 遵循了以下项目约定
+- 保持 `router + repository + schema` 边界，不新增平行 service 层。
+- 保持 `HTTPException(status_code=404, detail=...)` 风格，并统一使用 `Lore entry not found`。
+- 保持后端 `snake_case` 命名与 FastAPI 依赖注入写法。
+
+#### 3. 未重复造轮子的证明
+- 检查了 `characters.py`、`locations.py`、`lore_repository.py` 与 `lore_entry.py`，确认缺口仅在 `lore_entries.py` 路由接线。
+- 本轮没有新增新的资料域模型、service 层或平行删除响应结构。
+
+### 本地验证结果
+- `D:/WritierLab/WriterLab-v1/.venv/Scripts/python.exe -m pytest D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_lore_domain_contracts.py -q`
+  - 通过，`11 passed`
+- `D:/WritierLab/WriterLab-v1/.venv/Scripts/python.exe -m pytest D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_project_scene_contracts.py -q`
+  - 通过，`3 passed`
+
+### 当前状态
+- phase-2 资料域后端首轮已稳定 `Character / Location / LoreEntry` 的基础 CRUD 合同。
+- `Terminology` 仍保持 Gate 状态，本轮未凭空扩展。
+- 下一步应进入阶段二前端接线：补齐 lore API 明细/更新/删除消费，并让资料页从只读列表走向可编辑合同。
+
+## 编码前检查 - 阶段二 lore 前端最小接线
+
+时间：2026-04-07 20:10:05
+
+- 已查阅上下文摘要文件：`D:/WritierLab/.codex/context-summary-phase2-lore-frontend.md`
+- 将使用以下可复用组件：
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/client.ts`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/projects.ts`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/scenes.ts`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-hub.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/project-detail-contract.test.mjs`
+- 将遵循命名约定：前端保留 `camelCase` 函数命名，资源函数采用 `fetch* / create* / update* / delete*` 风格。
+- 将遵循代码风格：继续由 `lib/api/*` 封装请求，不在页面层直接散落 `fetch('/api/...')`。
+- 确认不重复造轮子：已检查 `lore.ts`、`projects.ts`、`scenes.ts`、`lore-library-page.tsx`、`lore-hub.tsx` 与既有前端结构测试，当前缺口集中在 lore 共享 API 合同与对应结构测试。
+
+## 2026-04-07 阶段二 lore 前端最小接线
+
+时间：2026-04-07 20:16:01
+
+### 上下文检索与红灯基线
+- 已读取 `context-summary-phase2-lore-domain.md` 与阶段二 implementation plan。
+- 已对照前端 5 个相似实现：`lib/api/lore.ts`、`lib/api/projects.ts`、`lib/api/scenes.ts`、`features/lore/lore-library-page.tsx`、`features/lore/lore-hub.tsx`。
+- 已通过 Context7 查询 `Next.js /vercel/next.js/v16.0.3`，确认当前项目继续通过共享 API client 集中请求细节符合 App Router 分层方向。
+- 当前会话缺少 `github.search_code` 可用工具，本轮已在上下文摘要中记录该限制并改用项目内模式对照。
+- 新增红灯测试：`D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+  - 初次运行结果：`1 failed, 1 passed`
+  - 暴露缺口：`lib/api/lore.ts` 缺少三域 detail / update / delete 共享合同。
+
+### 实际改动
+- 扩展 `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/lore.ts`：
+  - 新增三域响应类型、创建/更新 payload 类型、删除响应类型。
+  - 新增三域 `fetch*Detail / create* / update* / delete*` 共享 API 客户端函数。
+- 更新 `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`：
+  - 改为复用 `lib/api/lore.ts` 导出的共享类型，保留页面通过共享 API 取数。
+- 更新 `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-hub.tsx`：
+  - 改为复用 `lib/api/lore.ts` 导出的共享类型，保持总览页与子页同源契约。
+
+### 编码后声明
+#### 1. 复用了以下既有组件
+- `lib/api/client.ts`：继续作为所有 lore 请求的统一底层 client。
+- `lib/api/projects.ts`、`lib/api/scenes.ts`：复用 API 文件内定义类型 + 函数的组织模式。
+- `features/lore/lore-library-page.tsx`、`features/lore/lore-hub.tsx`：继续作为 lore 页面消费共享 client 的唯一入口。
+- `tests/features/project-detail-contract.test.mjs`：复用结构契约测试写法。
+
+#### 2. 遵循了以下项目约定
+- 没有在页面层新增 `fetch('/api/...')`，继续把请求封装留在 `lib/api/lore.ts`。
+- 没有新建平行页面或 service 层，只增强现有 lore API 文件和现有页面类型接线。
+- 保持前端 `camelCase` 函数命名与 `node:test` 结构契约测试模式。
+
+#### 3. 未重复造轮子的证明
+- 检查了 `projects.ts`、`scenes.ts`、`client.ts` 后，确认无需再造新的请求封装工具。
+- 检查了 lore 页面与 app 路由，确认现有 `lore-library-page.tsx` 与 `lore-hub.tsx` 已是唯一消费入口，本轮只在这里对齐共享类型。
+
+### 本地验证结果
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+  - 通过，`2 passed`
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - 通过，`4 passed`
+- `npm.cmd run typecheck`
+  - 通过
+  - 备注：`node` 直接运行测试时仍有 `MODULE_TYPELESS_PACKAGE_JSON` 警告，但不影响本轮验证结论。
+
+### 当前状态
+- 阶段二前端已补齐 lore 共享 API 的最小合同，后续若进入编辑能力，可直接基于这些函数接线。
+- lore 总览页与子路由继续通过共享 API 客户端取数，没有回退到页面层直连请求。
+- 下一步若继续阶段二，应进入资料页的最小编辑交互或 detail 面板，而不是扩 Terminology。
+
+## 2026-04-07 子代理推进 - lore 子页最小 detail/edit 交互
+
+时间：2026-04-07 20:16:01 之后
+
+- 用户明确要求按子代理流程推进，本轮已启用子代理工作流。
+- 子代理 A：只分析 `features/lore/*` 与 `app/lore/*` 的最小接入点。
+- 子代理 B：只分析现有前端可复用的编辑/保存/详情 UI 模式。
+- 主线程职责：整合子代理证据、确定最小方案、完成实现与验证。
+
+## 2026-04-07 子代理推进结果 - lore 子页最小 detail/edit 交互
+
+时间：2026-04-07 20:36:58
+
+### 子代理结论整合
+- explorer A 结论：最小改动面应收敛在 `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`，采用“左侧列表 + 右侧详情/编辑卡”形态，避免改 `app/lore/*` 和 `lore-hub.tsx`。
+- explorer B 结论：应复用 `InfoCard` 容器、`settings-hub.tsx` 的 `busy / message / error` 与局部字段更新模式、`project-create-page.tsx` 的暗色 `input / textarea` 表单写法。
+- 主线程决策：不额外拉 detail 请求，不新建详情页或 modal，直接基于当前列表项初始化草稿并使用共享 `update*` 客户端保存。
+
+### 红灯基线
+- 已先更新 `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+- 初次结果：`2 passed, 1 failed`
+- 暴露缺口：`lore-library-page.tsx` 尚未具备 `selectedItemId`、编辑状态和共享 `update*` 保存路径。
+
+### 实际改动
+- 更新 `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`
+  - 新增 `selectedItemId / isEditing / draft / saving / detailError / message` 状态。
+  - 把原单列表视图改为“左侧设定清单 + 右侧资料详情”。
+  - 三种 mode 统一支持“选中条目 → 开始编辑 → 保存修改 / 取消”。
+  - 保存时复用 `updateCharacter / updateLocation / updateLoreEntry`，成功后回写本地列表状态。
+- 更新 `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+  - 新增对 `selectedItemId`、`isEditing`、共享 `update*` 保存路径和“资料详情 / 开始编辑”语义的结构契约断言。
+
+### 编码后声明
+#### 1. 复用了以下既有组件
+- `shared/ui/info-card.tsx`：继续作为 lore 详情/编辑区的统一容器。
+- `features/settings/settings-hub.tsx`：复用 `busy / message / error` 与局部字段更新模式。
+- `features/project/project-create-page.tsx`：复用暗色 `input / textarea` 表单样式与最小保存流程。
+- `lib/api/lore.ts`：复用共享 `updateCharacter / updateLocation / updateLoreEntry` 客户端。
+
+#### 2. 遵循了以下项目约定
+- 没有改 `app/lore/*/page.tsx`，页面挂载层保持不变。
+- 没有在页面层直接 `fetch('/api/...')`，保存仍经过共享 lore API。
+- 没有新增平行页面、service 层或全局 store。
+
+#### 3. 未重复造轮子的证明
+- 子代理 B 已确认现有项目内已有可复用的表单与保存模式，因此本轮没有新造编辑工作台。
+- 子代理 A 已确认最小接入点仅在 `lore-library-page.tsx`，因此没有扩散到 `lore-hub.tsx` 或新详情页。
+
+### 本地验证结果
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+  - 通过，`3 passed`
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - 通过，`4 passed`
+- `npm.cmd run typecheck`
+  - 通过
+
+### 当前状态
+- lore 子页已经具备最小 detail/edit 交互，可在当前页直接选中资料并保存修改。
+- 下一步若继续 phase-2，可在此基础上补最小 delete/create 交互，或把 detail 面板扩到更多字段，而无需改动当前分层。
+
+## 2026-04-07 子代理推进 - lore 子页最小 create/delete 交互
+
+- 用户继续要求推进，主线程默认选择下一步为 lore 子页最小 create/delete 交互。
+- 子代理 A：分析当前 `lore-library-page.tsx` 中 create/delete 的最小接入点与状态设计。
+- 子代理 B：分析项目内可复用创建按钮、删除动作、轻量确认与反馈模式。
+- 主线程职责：基于子代理结论更新结构测试、实现最小 create/delete 闭环并完成验证。
+
+## 2026-04-07 子代理推进 - lore 子页最小 create/delete 交互
+
+- 默认下一步已锁定为 lore 子页最小 create/delete 交互。
+- 主线程已复核当前 `lore-library-page.tsx`、`lore-domain-contract.test.mjs` 与 `lib/api/lore.ts`。
+- 共享前提已满足：`lib/api/lore.ts` 已具备三域 `create* / delete*` 客户端，可直接复用。
+
+## 编码前检查 - 阶段二 lore 子页最小 create/delete 交互
+
+- 已查阅上下文摘要文件：`D:/WritierLab/.codex/context-summary-phase2-lore-create-delete.md`
+- 将继续复用：
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/lore.ts`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/shared/ui/info-card.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/settings/settings-hub.tsx`
+- 将遵循代码风格：继续把 create/delete 请求留在共享 lore client，页面内只做最小状态和视图更新。
+- 确认不重复造轮子：当前共享 client 与消息条模式已齐备，本轮只补最小 create/delete 闭环。
+- 说明：当前轮仍按子代理流程推进；若子代理工具再次异常，主线程会记录异常并在证据充分前不扩大改动范围。
+
+## 2026-04-07 子代理推进结果 - lore 子页最小 create/delete 交互
+
+时间：2026-04-07 21:22:32
+
+### 子代理结论整合
+- explorer A 已确认最小落点仍是 `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`，并建议在右侧详情卡顶部加入“新建 / 删除当前”。
+- explorer B 未在等待窗口内返回，主线程已用本地检索补足删除模式证据：`D:/WritierLab/WriterLab-v1/Next.js/frontend/features/project/project-hub.tsx` 使用 `window.confirm(...)` + `deletingProjectId` 作为现有轻量删除模式。
+- 主线程决策：不新建页面或 modal，继续复用当前详情卡、共享 lore API 客户端和轻量确认模式。
+
+### 红灯基线
+- 已先更新 `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+- 初次结果：`3 passed, 1 failed`
+- 暴露缺口：页面尚未包含 `isCreating / deleting` 状态、共享 `create* / delete*` 路径及“新建资料 / 删除当前”语义。
+
+### 实际改动
+- 更新 `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`
+  - 新增 `isCreating` 与 `deleting` 状态。
+  - 右侧详情卡顶部新增“新建资料 / 删除当前”。
+  - 新建流程：复用空草稿和当前详情卡表单，调用 `createCharacter / createLocation / createLoreEntry`，成功后插入列表并选中新项。
+  - 删除流程：对当前选中项使用 `window.confirm` 轻量确认，并调用 `deleteCharacter / deleteLocation / deleteLoreEntry`，成功后从列表移除。
+- 更新 `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+  - 新增对 `isCreating`、`deleting`、共享 `create* / delete*` 路径以及“新建资料 / 删除当前”语义的结构契约断言。
+
+### 编码后声明
+#### 1. 复用了以下既有组件和模式
+- `shared/ui/info-card.tsx`：继续作为 create/delete 与 detail/edit 的统一容器。
+- `features/project/project-hub.tsx`：复用 `window.confirm` + 删除中状态的轻量删除模式。
+- `lib/api/lore.ts`：复用共享 `create* / delete*` 客户端。
+
+#### 2. 遵循了以下项目约定
+- 没有改 `app/lore/*` 与 `lore-hub.tsx`。
+- 没有在页面层直接拼请求。
+- 没有引入平行页面、modal、service 层或全局 store。
+
+### 本地验证结果
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+  - 通过，`4 passed`
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - 通过，`4 passed`
+- `npm.cmd run typecheck`
+  - 通过
+
+### 当前状态
+- lore 子页已具备最小 create / detail / edit / delete 闭环。
+- 下一步如继续 phase-2，可扩更多字段、补真实交互测试，或回到提交与分支整理。
