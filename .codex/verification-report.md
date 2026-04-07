@@ -397,3 +397,59 @@ score: 94
   - 当前本轮任务已同时具备源码级、类型级、结构级和页面级验证证据
 
 summary: '已补齐前端页面级验证：在正确目录启动 `next dev` 后，修复 `/runtime` 页面缺失的中文 smoke 标记，使 frontend live smoke 的 6 条路由全部通过；结合此前已通过的结构测试、typecheck 与定向 eslint，当前这轮编辑器工作台重构可判定为通过。'
+
+## 2026-04-07 phase-1 收尾审查报告
+
+生成时间：2026-04-07 15:59:24
+
+### 审查范围
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/client.ts`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/next.config.ts`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_project_scene_contracts.py`
+- `D:/WritierLab/.codex/operations-log.md`
+- `D:/WritierLab/docs/superpowers/specs/2026-04-06-writerlab-multi-track-backend-first-design.md`
+
+### 需求映射
+- **删除网络错误提示收口**：已完成，统一保持在 `lib/api/client.ts`
+- **浏览器默认同源 `/api` 代理**：已完成，继续由 `next.config.ts` rewrite 承接
+- **phase-1 阶段状态留痕**：已完成，根 `.codex` 与规格文档已补录
+- **fresh verification**：已完成，后端契约测试、前端源码级测试与 typecheck 已复验
+
+### 技术维度评分
+- **代码质量：93/100**
+  - 请求基址、网络错误与浏览器代理继续集中在共享入口，没有回流页面层
+  - 本轮主要是收尾与对齐，没有扩大改动面
+- **测试覆盖：91/100**
+  - 后端 `test_project_scene_contracts.py` 直接证明阶段一主数据契约稳定
+  - 前端 `api-client.test.mjs` 与 `project-detail-contract.test.mjs` 已在当前代码状态下 fresh 通过
+  - 当前 shell 对 `node --test` 仍有限制，但可通过直接执行测试文件补足源码级验证
+- **规范遵循：96/100**
+  - 本轮新增文档与日志统一使用简体中文
+  - 保持 `.codex`、`docs/superpowers/specs` 与既有实现边界一致
+
+### 战略维度评分
+- **需求匹配：94/100**
+  - 本轮直接完成了阶段一最后缺少的状态标记和验证闭环
+  - 没有把任务扩散到阶段二资料域或其他蓝图项
+- **架构一致：95/100**
+  - 继续沿用 `router + repository + schema` 与 `frontend/lib/api/*` 的现有边界
+  - 页面层仍只消费契约，不重新散落代理或错误判断逻辑
+- **风险评估：90/100**
+  - 当前显式风险主要是 Windows 受限环境下 `node --test` 的 `spawn EPERM`
+  - 工作树仍有若干未提交变更与删除文件，需要在后续提交前继续确认作用域
+
+### 综合评分
+
+```Scoring
+score: 93
+```
+
+### 结论
+- **建议：通过**
+- **理由**：
+  - phase-1 的主数据契约、前端项目详情接线、删除错误语义与同源代理已有实现且已复验
+  - 本轮把缺失的阶段状态留痕补齐，阶段一可以视为完成首轮收口
+  - 当前唯一显式限制是受限 shell 的 `node --test` 环境问题，不是本轮代码回归
+
+summary: '已完成 phase-1 收尾留痕：项目概览契约、项目详情接线、删除网络错误提示与浏览器同源代理在当前代码状态下已完成 fresh verification；根 operations-log 与中期蓝图规格已补录阶段一实施状态。后端契约测试、前端源码级测试和 typecheck 均通过，唯一限制是当前 Windows 受限环境下 `node --test` 仍会触发 `spawn EPERM`。'

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { apiDelete, apiGet } from "../../lib/api/client.ts";
+import { apiDelete, apiGet, getApiBaseUrl } from "../../lib/api/client.ts";
 
 test("apiGet extracts detail from JSON error payloads", async () => {
   const originalFetch = globalThis.fetch;
@@ -33,5 +33,40 @@ test("apiDelete tolerates empty success bodies", async () => {
     assert.equal(payload, undefined);
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+test("apiDelete wraps network failures with api base context", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new TypeError("Failed to fetch");
+  };
+
+  try {
+    await assert.rejects(
+      () => apiDelete("/api/projects/network-error", "删除项目失败"),
+      (error) =>
+        error instanceof Error &&
+        error.message.includes("删除项目失败") &&
+        error.message.includes("http://127.0.0.1:8000") &&
+        error.message.includes("请确认后端服务已启动"),
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("getApiBaseUrl uses same-origin proxy in browser runtime by default", () => {
+  const originalWindow = globalThis.window;
+  globalThis.window = {};
+
+  try {
+    assert.equal(getApiBaseUrl(), "");
+  } finally {
+    if (originalWindow === undefined) {
+      delete globalThis.window;
+    } else {
+      globalThis.window = originalWindow;
+    }
   }
 });

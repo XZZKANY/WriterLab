@@ -518,3 +518,66 @@
 
 - 编辑器工作台重构实现、主路径乱码清理、结构测试、typecheck、定向 eslint 与 frontend live smoke 均已完成
 - 当前仍可继续考虑清理 `features/runtime/*` 内更多遗留英文/乱码文案，但这不再阻塞本轮交付
+
+## 2026-04-07 phase-1 收尾与留痕
+
+时间：2026-04-07 15:59:24
+
+### 任务
+- 继续收口 phase-1 的项目删除前端语义与同源代理留痕
+- 在根 `.codex` 与中期蓝图规格中标记阶段一已落地
+- 用 fresh verification 复核 phase-1 当前状态
+
+### 编码前检查
+- 已查阅上下文摘要文件：`D:/WritierLab/.codex/context-summary-phase1-closure.md`
+- 将使用以下可复用组件：
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/client.ts`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/next.config.ts`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - `D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_project_scene_contracts.py`
+- 将遵循命名约定：继续沿用前端 `camelCase`、后端 `snake_case` 与 `.codex/context-summary-*.md` 命名模式
+- 将遵循代码风格：把 API 基址与网络错误继续收敛在 `lib/api/client.ts`，把阶段状态留痕收敛在根 `.codex` 与 `docs/superpowers/specs`
+- 确认不重复造轮子：已检查 `project-detail.tsx`、`projects.py`、`project_repository.py`、`api-client.test.mjs` 与 phase-1 计划，当前缺口集中在留痕而不是新增并行实现
+
+### 上下文检索与结论
+- 读取了 `projects.py`、`project_repository.py`、`project-detail.tsx`、`projects.ts`、`api-client.test.mjs`、`next.config.ts`
+- 确认 phase-1 的 Task 2 和 Task 3 已真实落地，缺口集中在 Task 5 的阶段状态标记与根日志声明
+- 确认当前工作树里与 phase-1 直接相关的未提交改动是 `client.ts`、`next.config.ts` 与 `api-client.test.mjs`
+
+### 实际改动
+- 新增 `D:/WritierLab/.codex/context-summary-phase1-closure.md`
+- 在 `D:/WritierLab/docs/superpowers/specs/2026-04-06-writerlab-multi-track-backend-first-design.md` 标记阶段一实施状态
+- 在 `D:/WritierLab/.codex/operations-log.md` 追加本轮 phase-1 收尾记录
+- 在 `D:/WritierLab/.codex/verification-report.md` 追加本轮审查结论
+
+### 编码后声明
+#### 1. 复用了以下既有组件
+- `lib/api/client.ts`：继续作为删除网络错误与 API 基址语义的统一入口
+- `next.config.ts`：继续作为浏览器同源 `/api` 代理的唯一接线点
+- `test_project_scene_contracts.py`：继续作为 phase-1 后端主数据契约证明
+- `project-detail-contract.test.mjs`：继续作为前端消费项目概览契约的结构证明
+
+#### 2. 遵循了以下项目约定
+- 没有在页面层新增网络异常分支，而是继续复用 API client 统一错误消息
+- 没有新建平行文档体系，只在根 `.codex` 与现有 `docs/superpowers/specs` 中补齐状态
+- 没有越界到阶段二资料域或阶段三时间线域
+
+#### 3. 未重复造轮子的证明
+- 检查了 phase-1 计划、已有提交和当前实现，确认项目概览契约与项目详情接线已存在，无需重做第二套实现
+- 检查了现有测试文件，继续复用 `api-client.test.mjs` 和 `test_project_scene_contracts.py`，没有新增平行验证链路
+
+### 本地验证结果
+- `D:/WritierLab/WriterLab-v1/.venv/Scripts/python.exe -m pytest D:/WritierLab/WriterLab-v1/fastapi/backend/tests/test_project_scene_contracts.py -q`
+  - 通过，`3 passed`
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - 通过，4 项全部通过
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/project-detail-contract.test.mjs`
+  - 通过，1 项通过
+- `npm.cmd run typecheck`
+  - 通过
+- `node --test ...`
+  - 当前 Windows 受限环境仍会触发 `spawn EPERM`，因此本轮改用直接执行测试文件完成源码级验证
+
+### 当前状态
+- phase-1 的项目概览契约、项目详情接线、删除网络错误提示与浏览器同源代理均已有实现与 fresh verification
+- 阶段二到阶段四仍停留在蓝图或后续计划层，本轮未越界实现

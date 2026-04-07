@@ -130,6 +130,13 @@
 - 验证命令
 - 数据迁移与回滚说明
 
+当前实施状态（2026-04-07）：
+
+- 阶段一已完成首轮收口。
+- 后端已落地 `/api/projects/{project_id}/overview`、项目删除链路与场景版本冲突契约。
+- 前端项目详情已改为优先消费项目概览接口，浏览器默认 API 访问已收敛到同源 `/api` 代理。
+- 本地验证已覆盖 `test_project_scene_contracts.py`、`api-client.test.mjs`、`project-detail-contract.test.mjs` 与 `typecheck`。
+
 ### 6.2 阶段二：补齐资料域
 
 目标：让角色、设定、地点等写作基础资料能够稳定录入、读取和引用。
