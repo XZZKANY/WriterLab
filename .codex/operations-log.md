@@ -950,3 +950,12 @@
 - 自检结果：未发现 `TODO / TBD / 待定 / 占位` 等占位内容。
 - 设计结论保持不变：phase-3 第一轮先补 Timeline 最小后端合同，再收口 SceneVersion / StoryBranch 契约，最后做前端最小时间线查看接线。
 - 下一步：提交 spec 与留痕文件，然后请用户审阅 spec，再进入 implementation plan。
+
+## 2026-04-07 phase-3 implementation plan
+
+时间：2026-04-07 22:34:00
+
+- 已依据用户确认的方案 A 产出 implementation plan：`D:/WritierLab/docs/superpowers/plans/2026-04-07-writerlab-phase-3-timeline-version-plan.md`
+- 计划结构：Timeline 后端合同 → 版本/分支 API 回归 → 前端 Timeline 最小查看页 → 留痕与总验证。
+- 已按 plan 自检移除占位描述，避免把“最小修复”或“页面渲染”写成空话。
+- 下一步可选择按子代理流程执行，或在当前会话内按计划逐 task 实施。
