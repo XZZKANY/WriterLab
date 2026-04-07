@@ -31,12 +31,18 @@ type LoreLibraryPageProps = {
 type DetailDraft = {
   name: string;
   aliases: string;
+  appearance: string;
   personality: string;
+  background: string;
+  motivation: string;
+  speaking_style: string;
   status: string;
+  secrets: string;
   description: string;
   title: string;
   category: string;
   content: string;
+  priority: string;
   canonical: boolean;
 };
 
@@ -70,12 +76,18 @@ const secondaryButtonClassName =
 const emptyDetailDraft: DetailDraft = {
   name: "",
   aliases: "",
+  appearance: "",
   personality: "",
+  background: "",
+  motivation: "",
+  speaking_style: "",
   status: "",
+  secrets: "",
   description: "",
   title: "",
   category: "",
   content: "",
+  priority: "50",
   canonical: true,
 };
 
@@ -84,8 +96,13 @@ function makeDraftFromCharacter(item: CharacterResponse): DetailDraft {
     ...emptyDetailDraft,
     name: item.name,
     aliases: item.aliases || "",
+    appearance: item.appearance || "",
     personality: item.personality || "",
+    background: item.background || "",
+    motivation: item.motivation || "",
+    speaking_style: item.speaking_style || "",
     status: item.status || "",
+    secrets: item.secrets || "",
   };
 }
 
@@ -103,6 +120,7 @@ function makeDraftFromLoreEntry(item: LoreEntryResponse): DetailDraft {
     title: item.title,
     category: item.category,
     content: item.content,
+    priority: String(item.priority),
     canonical: item.canonical,
   };
 }
@@ -321,8 +339,13 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
             project_id: selectedProjectId,
             name: nextName,
             aliases: normalizeOptionalText(draft.aliases),
+            appearance: normalizeOptionalText(draft.appearance),
             personality: normalizeOptionalText(draft.personality),
+            background: normalizeOptionalText(draft.background),
+            motivation: normalizeOptionalText(draft.motivation),
+            speaking_style: normalizeOptionalText(draft.speaking_style),
             status: normalizeOptionalText(draft.status),
+            secrets: normalizeOptionalText(draft.secrets),
           });
           setCharacters((current) => [created, ...current]);
           setSelectedItemId(created.id);
@@ -331,8 +354,13 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
           const updated = await updateCharacter(selectedCharacter.id, {
             name: nextName,
             aliases: normalizeOptionalText(draft.aliases),
+            appearance: normalizeOptionalText(draft.appearance),
             personality: normalizeOptionalText(draft.personality),
+            background: normalizeOptionalText(draft.background),
+            motivation: normalizeOptionalText(draft.motivation),
+            speaking_style: normalizeOptionalText(draft.speaking_style),
             status: normalizeOptionalText(draft.status),
+            secrets: normalizeOptionalText(draft.secrets),
           });
           setCharacters((current) => current.map((item) => (item.id === updated.id ? updated : item)));
           setMessage("已保存资料。");
@@ -365,8 +393,13 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
         const nextTitle = draft.title.trim();
         const nextCategory = draft.category.trim();
         const nextContent = draft.content.trim();
+        const nextPriority = Number.parseInt(draft.priority.trim() || "50", 10);
         if (!nextTitle || !nextCategory || !nextContent) {
           setDetailError("词条标题、分类和正文不能为空。");
+          return;
+        }
+        if (!Number.isFinite(nextPriority)) {
+          setDetailError("词条优先级必须是数字。");
           return;
         }
 
@@ -376,6 +409,7 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
             title: nextTitle,
             category: nextCategory,
             content: nextContent,
+            priority: nextPriority,
             canonical: draft.canonical,
           });
           setEntries((current) => [created, ...current]);
@@ -386,6 +420,7 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
             title: nextTitle,
             category: nextCategory,
             content: nextContent,
+            priority: nextPriority,
             canonical: draft.canonical,
           });
           setEntries((current) => current.map((item) => (item.id === updated.id ? updated : item)));
@@ -620,8 +655,13 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
                   <div className="grid gap-3">
                     <input className={inputClassName} value={draft.name} onChange={(event) => updateDraft({ name: event.target.value })} placeholder="角色名称" />
                     <input className={inputClassName} value={draft.aliases} onChange={(event) => updateDraft({ aliases: event.target.value })} placeholder="别名" />
+                    <textarea className={textareaClassName} value={draft.appearance} onChange={(event) => updateDraft({ appearance: event.target.value })} placeholder="外观" />
                     <textarea className={textareaClassName} value={draft.personality} onChange={(event) => updateDraft({ personality: event.target.value })} placeholder="角色性格或当前描述" />
+                    <textarea className={textareaClassName} value={draft.background} onChange={(event) => updateDraft({ background: event.target.value })} placeholder="背景" />
+                    <textarea className={textareaClassName} value={draft.motivation} onChange={(event) => updateDraft({ motivation: event.target.value })} placeholder="动机" />
+                    <input className={inputClassName} value={draft.speaking_style} onChange={(event) => updateDraft({ speaking_style: event.target.value })} placeholder="说话风格" />
                     <input className={inputClassName} value={draft.status} onChange={(event) => updateDraft({ status: event.target.value })} placeholder="状态" />
+                    <textarea className={textareaClassName} value={draft.secrets} onChange={(event) => updateDraft({ secrets: event.target.value })} placeholder="秘密" />
                   </div>
                 ) : mode === "locations" ? (
                   <div className="grid gap-3">
@@ -632,6 +672,7 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
                   <div className="grid gap-3">
                     <input className={inputClassName} value={draft.title} onChange={(event) => updateDraft({ title: event.target.value })} placeholder="词条标题" />
                     <input className={inputClassName} value={draft.category} onChange={(event) => updateDraft({ category: event.target.value })} placeholder="分类" />
+                    <input className={inputClassName} value={draft.priority} onChange={(event) => updateDraft({ priority: event.target.value })} placeholder="优先级" />
                     <textarea className={textareaClassName} value={draft.content} onChange={(event) => updateDraft({ content: event.target.value })} placeholder="词条正文" />
                     <label className="flex items-center gap-3 rounded-2xl border border-white/8 bg-[#212121] px-4 py-3 text-sm text-zinc-200">
                       <input type="checkbox" checked={draft.canonical} onChange={(event) => updateDraft({ canonical: event.target.checked })} />
@@ -652,14 +693,24 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
                   <div className="grid gap-3">
                     <input className={inputClassName} value={draft.name} onChange={(event) => updateDraft({ name: event.target.value })} placeholder="角色名称" />
                     <input className={inputClassName} value={draft.aliases} onChange={(event) => updateDraft({ aliases: event.target.value })} placeholder="别名" />
+                    <textarea className={textareaClassName} value={draft.appearance} onChange={(event) => updateDraft({ appearance: event.target.value })} placeholder="外观" />
                     <textarea className={textareaClassName} value={draft.personality} onChange={(event) => updateDraft({ personality: event.target.value })} placeholder="角色性格或当前描述" />
+                    <textarea className={textareaClassName} value={draft.background} onChange={(event) => updateDraft({ background: event.target.value })} placeholder="背景" />
+                    <textarea className={textareaClassName} value={draft.motivation} onChange={(event) => updateDraft({ motivation: event.target.value })} placeholder="动机" />
+                    <input className={inputClassName} value={draft.speaking_style} onChange={(event) => updateDraft({ speaking_style: event.target.value })} placeholder="说话风格" />
                     <input className={inputClassName} value={draft.status} onChange={(event) => updateDraft({ status: event.target.value })} placeholder="状态" />
+                    <textarea className={textareaClassName} value={draft.secrets} onChange={(event) => updateDraft({ secrets: event.target.value })} placeholder="秘密" />
                   </div>
                 ) : (
                   <div className="space-y-4 text-sm leading-7 text-zinc-300">
                     <div><span className="text-zinc-500">别名：</span>{selectedCharacter.aliases || "无"}</div>
+                    <div><span className="text-zinc-500">外观：</span>{selectedCharacter.appearance || "暂无外观描述。"}</div>
                     <div><span className="text-zinc-500">性格：</span>{selectedCharacter.personality || "暂无角色描述。"}</div>
+                    <div><span className="text-zinc-500">背景：</span>{selectedCharacter.background || "暂无背景描述。"}</div>
+                    <div><span className="text-zinc-500">动机：</span>{selectedCharacter.motivation || "暂无动机描述。"}</div>
+                    <div><span className="text-zinc-500">说话风格：</span>{selectedCharacter.speaking_style || "未标记"}</div>
                     <div><span className="text-zinc-500">状态：</span>{selectedCharacter.status || "未标记"}</div>
+                    <div><span className="text-zinc-500">秘密：</span>{selectedCharacter.secrets || "暂无秘密描述。"}</div>
                   </div>
                 )
               ) : mode === "locations" && selectedLocation ? (
@@ -679,6 +730,7 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
                   <div className="grid gap-3">
                     <input className={inputClassName} value={draft.title} onChange={(event) => updateDraft({ title: event.target.value })} placeholder="词条标题" />
                     <input className={inputClassName} value={draft.category} onChange={(event) => updateDraft({ category: event.target.value })} placeholder="分类" />
+                    <input className={inputClassName} value={draft.priority} onChange={(event) => updateDraft({ priority: event.target.value })} placeholder="优先级" />
                     <textarea className={textareaClassName} value={draft.content} onChange={(event) => updateDraft({ content: event.target.value })} placeholder="词条正文" />
                     <label className="flex items-center gap-3 rounded-2xl border border-white/8 bg-[#212121] px-4 py-3 text-sm text-zinc-200">
                       <input type="checkbox" checked={draft.canonical} onChange={(event) => updateDraft({ canonical: event.target.checked })} />
@@ -688,6 +740,7 @@ export default function LoreLibraryPage({ mode }: LoreLibraryPageProps) {
                 ) : (
                   <div className="space-y-4 text-sm leading-7 text-zinc-300">
                     <div><span className="text-zinc-500">分类：</span>{selectedEntry.category}</div>
+                    <div><span className="text-zinc-500">优先级：</span>{selectedEntry.priority}</div>
                     <div><span className="text-zinc-500">正文：</span>{selectedEntry.content}</div>
                     <div><span className="text-zinc-500">正典状态：</span>{selectedEntry.canonical ? "正典" : "非正典"}</div>
                   </div>

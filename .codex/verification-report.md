@@ -655,3 +655,53 @@ score: 94
   - 当前适合进入提交整理或下一轮更细字段扩展，而不是重构架构。
 
 summary: '已按子代理流程完成 lore 子页最小 create/delete 交互：在 `lore-library-page.tsx` 内补齐“新建资料 / 删除当前”，继续复用共享 `create* / delete*` 客户端和轻量 `window.confirm` 删除模式；当前 `lore-domain-contract.test.mjs` 通过 4 项，`api-client.test.mjs` 通过 4 项，`npm.cmd run typecheck` 通过，建议通过。'
+
+## 2026-04-07 子代理推进 - 阶段二 lore 更多字段交互审查报告
+
+生成时间：2026-04-07 21:53:33
+
+### 审查范围
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/lore.ts`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/app/schemas/character.py`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/app/schemas/lore_entry.py`
+
+### 需求映射
+- **扩展 Character 更多字段前端暴露**：已完成。
+- **扩展 LoreEntry `priority` 前端暴露**：已完成。
+- **继续复用共享 lore API、避免平行架构**：已完成。
+- **本地验证**：已完成。
+
+### 技术维度评分
+- **代码质量：94/100**
+  - draft、payload、表单、详情展示都已贯通到新增字段，结构完整。
+  - 改动集中在单个 lore 页面和结构测试，边界清晰。
+- **测试覆盖：93/100**
+  - `lore-domain-contract.test.mjs` 已 fresh 通过 5 项，覆盖本轮新增字段语义。
+  - `api-client.test.mjs` 与 `typecheck` 继续通过。
+- **规范遵循：95/100**
+  - 继续复用共享 API 与既有 UI 模式，中文文档和日志留痕完整。
+
+### 战略维度评分
+- **需求匹配：94/100**
+  - 本轮严格限定在阶段二更多字段/交互，没有越界到新页面或全局状态。
+- **架构一致：95/100**
+  - 保持 `lib/api/* + features/* + shared/ui/*` 分层，没有重复造轮子。
+- **风险评估：91/100**
+  - 剩余风险主要是缺少真实组件交互测试，但不影响本轮字段接线结论。
+
+### 综合评分
+
+```Scoring
+score: 94
+```
+
+### 结论
+- **建议：通过**
+- **理由**：
+  - 更多字段的前后端合同已经在当前页面中形成完整映射。
+  - 本地自动化验证 fresh 通过，且没有引入新的架构分叉。
+  - 当前可以进入第二个 commit，并继续执行远端推送。
+
+summary: '已按子代理流程完成阶段二 lore 更多字段交互收尾：`lore-library-page.tsx` 现已暴露 Character 的 appearance、background、motivation、speaking_style、secrets，以及 LoreEntry 的 priority；`lore-domain-contract.test.mjs` fresh 通过 5 项，`api-client.test.mjs` 通过 4 项，`npm.cmd run typecheck` 通过，建议通过并进入提交与推送。'

@@ -865,3 +865,69 @@
 ### 当前状态
 - lore 子页已具备最小 create / detail / edit / delete 闭环。
 - 下一步如继续 phase-2，可扩更多字段、补真实交互测试，或回到提交与分支整理。
+
+## 2026-04-07 提交结果 - phase-2 已稳定里程碑
+
+- 当前分支：`master`
+- 当前远端：`origin -> https://github.com/XZZKANY/WriterLab.git`
+- 提交前 fresh 验证：
+  - `test_lore_domain_contracts.py` → `11 passed`
+  - `test_project_scene_contracts.py` → `3 passed`
+  - `lore-domain-contract.test.mjs` → `4 passed`
+  - `api-client.test.mjs` → `4 passed`
+  - `npm.cmd run typecheck` → 通过
+- 已完成提交：`8a1a965`
+- 提交信息：`完成阶段二资料域首轮 CRUD 闭环`
+
+## 编码前检查 - 阶段二 lore 更多字段交互
+
+时间：2026-04-07 21:38:02
+
+- 已查阅上下文摘要文件：`D:/WritierLab/.codex/context-summary-phase2-lore-more-fields.md`
+- 将使用以下可复用组件：
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/lore.ts`
+  - `D:/WritierLab/WriterLab-v1/fastapi/backend/app/schemas/character.py`
+  - `D:/WritierLab/WriterLab-v1/fastapi/backend/app/schemas/lore_entry.py`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/settings/settings-hub.tsx`
+  - `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/project/project-create-page.tsx`
+- 将遵循命名约定：继续保持前端 `camelCase`、共享 lore API 命名和简体中文界面文案。
+- 将遵循代码风格：继续使用暗色表单控件、`InfoCard`、共享 `create* / update*` 客户端和结构测试断言模式。
+- 确认不重复造轮子：后端 schema 与前端 lore API 已支持目标字段，本轮只做页面接线，不新增平行组件或请求层。
+
+## 2026-04-07 子代理推进结果 - 阶段二 lore 更多字段交互
+
+时间：2026-04-07 21:53:33
+
+### 主线程核查与收尾
+- 已复核 `D:/WritierLab/WriterLab-v1/Next.js/frontend/features/lore/lore-library-page.tsx`，确认 JSX 完整闭合。
+- 已复核 `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`，确认新增结构断言覆盖 Character 更多字段与 LoreEntry `priority`。
+- 已再次核对 `D:/WritierLab/WriterLab-v1/Next.js/frontend/lib/api/lore.ts`、`fastapi/backend/app/schemas/character.py`、`fastapi/backend/app/schemas/lore_entry.py`，确认前后端合同字段一致。
+
+### 编码后声明
+#### 1. 复用了以下既有组件和模式
+- `frontend/features/lore/lore-library-page.tsx`：继续作为 lore 单页详情/编辑/创建统一载体。
+- `frontend/lib/api/lore.ts`：继续复用共享 `create* / update*` 客户端，不新增请求层。
+- `frontend/shared/ui/info-card.tsx`、`frontend/features/settings/settings-hub.tsx`：继续复用既有暗色卡片与表单控件组织模式。
+
+#### 2. 遵循了以下项目约定
+- 没有改 `app/lore/*`、`lore-hub.tsx`、modal、service 层或全局 store。
+- 继续保持前端 `camelCase` 状态管理与后端 `snake_case` 字段透传对齐。
+- 继续使用简体中文界面文案与现有 `InfoCard` 版式。
+
+#### 3. 未重复造轮子的证明
+- 后端 schema 与共享 lore API 已支持目标字段，本轮仅补页面映射与展示，没有新增平行抽象。
+- 已对照 `settings-hub.tsx`、`project-create-page.tsx` 与 `info-card.tsx` 的现有模式，继续沿用现有输入控件和消息条组织方式。
+
+### 本地验证结果
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/lore-domain-contract.test.mjs`
+  - 通过，`5 passed`
+- `node D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/features/api-client.test.mjs`
+  - 通过，`4 passed`
+- `npm.cmd run typecheck`
+  - 通过
+
+### 当前状态
+- 阶段二当前处于“更多字段/交互扩展”收尾完成状态，可进入第二个 commit。
+- 当前工作树待提交内容包括：`lore-library-page.tsx`、`lore-domain-contract.test.mjs`、`.codex/context-summary-phase2-lore-more-fields.md` 与日志留痕更新。
+- 下一步：提交“扩展阶段二资料域更多字段交互”，随后执行远端推送。

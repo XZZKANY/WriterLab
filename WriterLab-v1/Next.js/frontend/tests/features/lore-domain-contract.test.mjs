@@ -61,3 +61,20 @@ test("lore library page provides minimal create delete flows through shared cont
   assert.equal(librarySource.includes("新建资料"), true);
   assert.equal(librarySource.includes("删除当前"), true);
 });
+
+test("lore library page exposes more character fields and lore priority through shared contracts", async () => {
+  const librarySource = await readFile(loreLibraryPagePath, "utf8");
+
+  assert.equal(librarySource.includes("appearance"), true);
+  assert.equal(librarySource.includes("background"), true);
+  assert.equal(librarySource.includes("motivation"), true);
+  assert.equal(librarySource.includes("speaking_style"), true);
+  assert.equal(librarySource.includes("secrets"), true);
+  assert.equal(librarySource.includes("priority"), true);
+  assert.equal(librarySource.includes("外观"), true);
+  assert.equal(librarySource.includes("背景"), true);
+  assert.equal(librarySource.includes("动机"), true);
+  assert.equal(librarySource.includes("说话风格"), true);
+  assert.equal(librarySource.includes("秘密"), true);
+  assert.equal(librarySource.includes("优先级"), true);
+});
