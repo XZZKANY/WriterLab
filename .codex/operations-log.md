@@ -1079,3 +1079,34 @@
 - 已更新审查报告：`D:\WritierLab\.codex\verification-report.md`
 - 当前结论：phase-4 第一轮继续采用方案 A，即后端契约优先的 workflow/context/runtime 联动收口
 - 当前阶段：停在用户 review gate，等待用户审阅 spec 后再进入 implementation plan
+
+
+## 2026-04-09 phase-4 implementation plan 写入与自检
+
+时间：2026-04-09 20:35:00
+
+### 编码前检查 - phase-4 implementation plan
+
+□ 已查阅设计文档：`D:\WritierLab\docs\superpowers\specs\2026-04-09-writerlab-phase-4-workflow-context-runtime-design.md`
+□ 已查阅参考计划：`D:\WritierLab\docs\superpowers\plans\2026-04-07-writerlab-phase-3-timeline-version-plan.md`
+□ 已查阅现有实现与测试入口：
+- `WriterLab-v1/fastapi/backend/app/api/ai.py`
+- `WriterLab-v1/fastapi/backend/app/api/runtime.py`
+- `WriterLab-v1/fastapi/backend/app/services/workflow/workflow_service.py`
+- `WriterLab-v1/fastapi/backend/app/services/context/context_service.py`
+- `WriterLab-v1/fastapi/backend/tests/services/workflow_service_suite.py`
+- `WriterLab-v1/fastapi/backend/tests/services/context_service_suite.py`
+- `WriterLab-v1/fastapi/backend/tests/api/api_routes_suite.py`
+- `WriterLab-v1/fastapi/backend/tests/runtime/runtime_smoke_reports_suite.py`
+- `WriterLab-v1/Next.js/frontend/features/runtime/runtime-debug-workbench.tsx`
+- `WriterLab-v1/Next.js/frontend/features/runtime/hooks/use-runtime-diagnostics.ts`
+- `WriterLab-v1/Next.js/frontend/features/editor/hooks/use-scene-context.ts`
+□ 将遵循命名约定：文档、日志、审查结论全部使用简体中文；代码标识符保留项目既有英文命名
+□ 将遵循代码风格：沿用 phase-3 plan 的 header、范围与 Gate、文件职责、Task 分解、完成标准与执行交接结构
+□ 确认不重复造轮子，证明：本轮只补强既有 tests、hooks、router 与 service，不新建平行系统
+
+### 结果
+- 已生成 implementation plan：`D:\WritierLab\docs\superpowers\plans\2026-04-09-writerlab-phase-4-workflow-context-runtime-plan.md`
+- 新鲜自检结果：占位扫描无命中；header 必备字段齐全；任务数为 `5`
+- 当前结论：plan 继续保持“workflow/context 后端合同 -> runtime 合同 -> 前端消费合同 -> 留痕总验证”的顺序
+- 下一步可在用户选择后按 `subagent-driven-development` 或 `executing-plans` 执行
