@@ -25,5 +25,8 @@ uvicorn-*.log
 .DS_Store
 Thumbs.db
 
+# Local worktrees
+.worktrees/
+
 # Keep the app source
 !WriterLab-v1/
