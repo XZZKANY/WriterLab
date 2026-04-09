@@ -33,3 +33,20 @@ class TimelineEventResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TimelineEventUpdate(BaseModel):
+    chapter_id: UUID | None = None
+    scene_id: UUID | None = None
+    title: str | None = None
+    event_type: str | None = None
+    description: str | None = None
+    participants: list[str] | None = None
+    event_time_label: str | None = None
+    canonical: bool | None = None
+    metadata_json: dict | None = None
+
+
+class TimelineEventDeleteResponse(BaseModel):
+    deleted: bool
+    timeline_event_id: UUID
