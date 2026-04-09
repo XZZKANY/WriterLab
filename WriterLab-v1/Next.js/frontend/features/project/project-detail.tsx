@@ -127,6 +127,13 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
       tone: "sky",
     },
     {
+      href: `/project/${projectId}/timeline`,
+      label: "项目时间线",
+      description: "查看当前项目的剧情事实、事件顺序和关键节点。",
+      icon: ScrollText,
+      tone: "emerald",
+    },
+    {
       href: `/project/${projectId}/books`,
       label: "书籍目录",
       description: "浏览项目内书籍结构与摘要。",
