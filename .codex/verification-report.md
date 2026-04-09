@@ -765,3 +765,33 @@ score: 94
 通过
 
 summary: 'phase-3 第一轮已完成 timeline / version / branch 的稳定联动地基：Timeline 后端最小合同、版本与分支回归测试、前端项目级 Timeline 查看页和总验证均已完成，当前可以结束 phase-3 第一轮并转入下一阶段规划。'
+
+
+---
+
+## 2026-04-09 phase-4 设计文档审查报告
+
+## 结论
+```Scoring
+score: 93
+```
+
+## 技术维度
+- 代码质量：本轮为设计文档交付，结构沿用 phase-3 spec，章节完整，接口与路径引用均可追溯到现有代码与运行手册。
+- 测试覆盖：已完成占位扫描与全文一致性复核；当前未执行业务测试，因为本轮尚未进入 implementation plan 与代码实现。
+- 规范遵循：全文使用简体中文，留痕写入项目本地 `.codex/`，并保持既有文档命名与分层表述。
+
+## 战略维度
+- 需求匹配：已完成用户要求的 phase-4 设计文档，并明确停在用户 review gate，没有越界到 implementation plan。
+- 架构一致：继续坚持后端契约优先，复用 `app/api/ai.py`、`app/api/runtime.py`、`use-scene-context()` 与 `use-runtime-diagnostics()` 既有边界。
+- 风险评估：当前主要风险是后续实施时可能扩张范围；设计文档已显式排除 editor 重写、runtime 中心页重建与复杂实时观测系统。
+
+## 本地验证
+- `Select-String docs/superpowers/specs/2026-04-09-writerlab-phase-4-workflow-context-runtime-design.md -Pattern 'TODO|TBD|待定|占位'`：无命中
+- 全文人工复核：已修正接口路径歧义与一处引号错误
+- 当前结论仅证明 spec 写作与自检完成，不代表 implementation plan 或代码实现已开始
+
+## 建议
+通过
+
+summary: 'phase-4 正式设计文档已完成并通过自检：范围聚焦 workflow/context/runtime 第一轮联动收口，保持后端契约优先与现有 hooks 消费边界，当前适合交给用户审阅后再进入 implementation plan。'

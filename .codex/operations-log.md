@@ -1029,3 +1029,53 @@
 - 前端：`node tests/features/timeline-domain-contract.test.mjs` → `4 passed`
 - 前端：`node tests/features/editor-workspace-structure.test.mjs` → `1 passed`
 - 前端：`npm.cmd run typecheck` → 通过
+
+## 2026-04-09 无关 `.codex` 文件归档与 phase-4 启动
+
+时间：2026-04-09 19:10:00
+
+### 无关文件归档
+- 已归档：`D:\WritierLab\.codex\context-summary-codex-apps-mcp-startup.md`
+- 归档位置：`C:\Users\kanye\.codex\memories\WritierLab\archived-context\context-summary-codex-apps-mcp-startup-2026-04-08.md`
+- 结果：仓库 `git status --short` 已清空，无关 `.codex` 文件不再污染当前工作树
+
+### phase-4 kickoff 上下文收集
+- 已读取总蓝图：`docs/superpowers/specs/2026-04-06-writerlab-multi-track-backend-first-design.md`
+- 已读取 workflow 主链路：`fastapi/backend/app/api/routers/workflow.py`、`fastapi/backend/app/services/workflow/workflow_service.py`
+- 已读取 context 编译链路：`fastapi/backend/app/services/context/context_service.py`
+- 已读取 runtime 前端与诊断 hook：`Next.js/frontend/features/runtime/runtime-debug-workbench.tsx`、`features/runtime/hooks/use-runtime-diagnostics.ts`
+- 已读取 editor 上下文消费：`Next.js/frontend/features/editor/hooks/use-scene-context.ts`
+- 已读取运行手册：`WriterLab-v1/docs/runtime-notes.md`
+- 已生成 kickoff 摘要：`D:\WritierLab\.codex\context-summary-phase4-kickoff.md`
+
+### 当前结论
+- phase-4 的真实任务不是新建 workflow/context/runtime，而是收口三者的联动契约与验证出口
+- 下一步应先写 phase-4 设计文档，再拆 implementation plan
+
+
+## 2026-04-09 phase-4 设计文档写入与自检
+
+时间：2026-04-09 20:05:00
+
+### 编码前检查 - phase-4 设计文档
+
+□ 已查阅上下文摘要文件：`D:\WritierLab\.codex\context-summary-phase4-kickoff.md`
+□ 将使用以下可复用组件：
+- `D:\WritierLab\docs\superpowers\specs\2026-04-06-writerlab-multi-track-backend-first-design.md`：phase-4 总蓝图
+- `D:\WritierLab\docs\superpowers\specs\2026-04-07-writerlab-phase-3-timeline-version-design.md`：spec 结构与 phase-3 延续边界
+- `D:\WritierLab\WriterLab-v1\fastapi\backend\app\api\ai.py`：workflow 接口基线
+- `D:\WritierLab\WriterLab-v1\fastapi\backend\app\services\workflow\workflow_service.py`：workflow 主链路与 snapshot 回写
+- `D:\WritierLab\WriterLab-v1\fastapi\backend\app\services\context\context_service.py`：context compiler 基线
+- `D:\WritierLab\WriterLab-v1\fastapi\backend\app\api\runtime.py`：runtime 诊断接口
+- `D:\WritierLab\WriterLab-v1\Next.js\frontend\features\editor\hooks\use-scene-context.ts`：editor 侧上下文消费边界
+- `D:\WritierLab\WriterLab-v1\Next.js\frontend\features\runtime\hooks\use-runtime-diagnostics.ts`：runtime 侧诊断消费边界
+□ 将遵循命名约定：spec 标题、章节名、日志与审查内容全部使用简体中文，代码标识符保留项目现有英文命名
+□ 将遵循代码风格：沿用 phase-3 设计文档章节结构与“后端契约优先”叙事顺序
+□ 确认不重复造轮子，证明：已复核现有 workflow/context/runtime 真正实现与测试入口，本轮只收口文档合同，不新建平行系统
+
+### 结果
+- 已生成设计文档：`D:\WritierLab\docs\superpowers\specs\2026-04-09-writerlab-phase-4-workflow-context-runtime-design.md`
+- 已完成 spec 自检：占位扫描无 `TODO / TBD / 待定 / 占位` 命中；全文复核后修正了接口路径表述与一处引号问题
+- 已更新审查报告：`D:\WritierLab\.codex\verification-report.md`
+- 当前结论：phase-4 第一轮继续采用方案 A，即后端契约优先的 workflow/context/runtime 联动收口
+- 当前阶段：停在用户 review gate，等待用户审阅 spec 后再进入 implementation plan
