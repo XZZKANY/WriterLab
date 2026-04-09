@@ -705,3 +705,63 @@ score: 94
   - 当前可以进入第二个 commit，并继续执行远端推送。
 
 summary: '已按子代理流程完成阶段二 lore 更多字段交互收尾：`lore-library-page.tsx` 现已暴露 Character 的 appearance、background、motivation、speaking_style、secrets，以及 LoreEntry 的 priority；`lore-domain-contract.test.mjs` fresh 通过 5 项，`api-client.test.mjs` 通过 4 项，`npm.cmd run typecheck` 通过，建议通过并进入提交与推送。'
+
+---
+
+## 任务
+修复 Codex CLI 启动时 `codex_apps` MCP 握手失败（`https://chatgpt.com/backend-api/wham/apps`）
+
+## 验证时间
+2026-04-08 20:24:00
+
+## 结论
+```Scoring
+score: 91
+```
+
+## 技术维度
+- 代码质量：未修改仓库业务代码，只对用户级 Codex 配置做了最小、可逆改动。
+- 测试覆盖：完成了配置状态验证与网络侧交叉验证；未能在当前会话内完整替代用户真实重启场景。
+- 规范遵循：完整保留备份，所有留痕都写入项目本地 `.codex/`。
+
+## 战略维度
+- 需求匹配：已把“修复报错”与“恢复 apps 能力”区分开，并选择前者的最小修复路径。
+- 架构一致：修复点落在 Codex 官方 feature 开关，而不是继续误调 `startup_timeout`。
+- 风险评估：禁用 apps 后，Apps/Connectors 能力会暂时不可用；若将来需要这些能力，需恢复 `apps = true` 并继续处理云端链路问题。
+
+## 本地验证
+- `codex features list`：`apps stable false`
+- `Select-String C:\Users\kanye\.codex\config.toml`：确认 `apps = false`
+- 备份文件存在：`C:\Users\kanye\.codex\config.toml.bak-20260408-2022`
+- `api.openai.com:443` 与 `chatgpt.com:443` 当前均可达，但历史日志仍存在 403、Cloudflare 挑战页与 `unsupported_country_region_territory`
+- 额外尝试：用 `codex exec --ephemeral` 做即时启动验证时，子进程在当前代理环境下未给出稳定完成结果，因此最终效果仍以用户重启 Codex 后观察为准
+
+## 建议
+通过
+
+## 结论摘要
+当前修复不是“让 `codex_apps` 云端能力恢复可用”，而是“停止 Codex 在启动时继续初始化这条已知失败的 apps 通道”。对用户当前需求而言，这是一条可逆且命中的修复路径：关闭 `apps` 后，`codex_apps` 不应再参与启动，从而不再触发同类握手失败告警。
+
+---
+
+## 2026-04-09 phase-3 第一轮审查报告
+
+## 结论
+```Scoring
+score: 94
+```
+
+## 技术维度
+- 代码质量：Timeline 后端、前端最小查看页与版本/分支回归测试都沿用既有分层，没有引入平行架构。
+- 测试覆盖：后端组合验证 `15 passed`，前端 timeline 结构测试 `4 passed`，editor 结构测试 `1 passed`，并补跑了 `typecheck`。
+- 规范遵循：改动继续落在 `router + service + repository + schema` 与 `lib/api/* + features/* + app/*` 既有边界内。
+
+## 战略维度
+- 需求匹配：已完成 phase-3 第一轮核心目标——Timeline 合同、版本/分支回归、前端最小查看页与留痕闭环。
+- 架构一致：继续复用 `scenes.py`、`branches.py`、`project-detail.tsx` 与共享 API client，没有重写 `versions-pane` 或 editor 主工作台。
+- 风险评估：当前剩余风险主要转移到 phase-4 的 workflow/context/runtime 深层联动，不再停留在 phase-3 基础面。
+
+## 建议
+通过
+
+summary: 'phase-3 第一轮已完成 timeline / version / branch 的稳定联动地基：Timeline 后端最小合同、版本与分支回归测试、前端项目级 Timeline 查看页和总验证均已完成，当前可以结束 phase-3 第一轮并转入下一阶段规划。'

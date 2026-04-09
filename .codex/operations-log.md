@@ -959,3 +959,73 @@
 - 计划结构：Timeline 后端合同 → 版本/分支 API 回归 → 前端 Timeline 最小查看页 → 留痕与总验证。
 - 已按 plan 自检移除占位描述，避免把“最小修复”或“页面渲染”写成空话。
 - 下一步可选择按子代理流程执行，或在当前会话内按计划逐 task 实施。
+
+## 编码前检查 - codex_apps MCP 启动失败
+
+时间：2026-04-08 20:20:00
+
+□ 已查阅上下文摘要文件：`.codex/context-summary-codex-apps-mcp-startup.md`
+□ 将使用以下可复用组件：
+- `C:\Users\kanye\.codex\config.toml`：当前配置
+- `C:\Users\kanye\.codex\config.toml.bak-20260406-212255`：历史回滚参考
+- `C:\Users\kanye\.codex\log\codex-tui.log`：失败日志
+- `C:\Users\kanye\.codex\sessions\2026\04\04\rollout-2026-04-04T18-44-40-019d5818-4c75-7602-8320-94f379899b61.jsonl`：`wham/apps` 与地区限制证据
+□ 将遵循命名约定：结论文档和日志使用简体中文，配置键名保持原文
+□ 将遵循代码风格：只做最小、可逆的配置修改，不修改仓库业务代码
+□ 确认不重复造轮子，证明：已检查现有配置、历史备份、运行日志与会话证据，避免再次仅靠增加 timeout 的无效修复
+
+## 编码后声明 - codex_apps MCP 启动失败
+
+时间：2026-04-08 20:24:00
+
+### 1. 复用了以下既有组件
+- `C:\Users\kanye\.codex\config.toml`：主配置入口
+- `C:\Users\kanye\.codex\config.toml.bak-20260406-212255`：历史对照
+- `C:\Users\kanye\.codex\log\codex-tui.log`：403 / Cloudflare / plugins-connectors 失败证据
+- `C:\Users\kanye\.codex\sessions\2026\04\04\rollout-2026-04-04T18-44-40-019d5818-4c75-7602-8320-94f379899b61.jsonl`：`wham/apps` 超时与地区限制证据
+
+### 2. 遵循了以下项目约定
+- 命名约定：说明和日志全部使用简体中文
+- 代码风格：只做最小、可逆配置改动，不扩展到仓库代码
+- 文件组织：留痕写入 `D:\WritierLab\.codex\`
+
+### 3. 对比了以下相似实现
+- 旧方案：`[mcp_servers.codex_apps] startup_timeout_sec = 90`，只缓解超时，不解决握手失败
+- 当前方案：`[features] apps = false`，直接关闭触发报错的内置 apps 通道
+- 运行模式对比：本地 stdio MCP 正常，云端 apps/connectors 链路异常
+
+### 4. 未重复造轮子的证明
+- 已检查现有配置、历史备份、日志、会话和 CLI feature 列表
+- 没有新增脚本或自定义代理逻辑，只调整官方支持的 feature 开关
+
+### 5. 本次实际改动
+- 备份：`C:\Users\kanye\.codex\config.toml.bak-20260408-2022`
+- 修改：`C:\Users\kanye\.codex\config.toml` 第 11 行新增 `apps = false`
+
+## 2026-04-09 phase-3 第一轮实施收口
+
+时间：2026-04-09 18:30:00
+
+### Task 2 - Timeline 后端最小合同
+- fresh 验证：`pytest tests/test_timeline_domain_contracts.py -q` → `5 passed`
+- 提交：`2da22e2 实现 phase-3 timeline 最小后端合同`
+
+### Task 3 - 版本与分支 API 回归
+- 新增：`WriterLab-v1/fastapi/backend/tests/test_story_version_branch_contracts.py`
+- red 基线：测试首次即绿，说明现有实现已满足计划中的版本/分支契约，本轮无需修改生产代码
+- 组合验证：`pytest tests/test_timeline_domain_contracts.py tests/test_story_version_branch_contracts.py tests/test_project_scene_contracts.py -q` → `13 passed`
+- 提交：`aafb554 收口 phase-3 版本与分支 API 回归`
+
+### Task 4 - 前端 Timeline 最小查看页
+- 新增：`lib/api/timeline.ts`、`features/timeline/timeline-library-page.tsx`、`app/project/[projectId]/timeline/page.tsx`
+- 修改：`features/project/project-detail.tsx`，补项目时间线入口
+- red 基线：`node tests/features/timeline-domain-contract.test.mjs` → 4 项失败，缺少 timeline client / page / route / 入口链接
+- green 验证：`node tests/features/timeline-domain-contract.test.mjs` → `4 passed`
+- 验证：`npm.cmd run typecheck` → 通过
+- 提交：`4a69a1e 接入 phase-3 timeline 最小前端查看页`
+
+### Task 5 - 总验证
+- 后端：`pytest tests/test_timeline_domain_contracts.py tests/test_story_version_branch_contracts.py tests/test_project_scene_contracts.py tests/test_branch_service.py -q` → `15 passed`
+- 前端：`node tests/features/timeline-domain-contract.test.mjs` → `4 passed`
+- 前端：`node tests/features/editor-workspace-structure.test.mjs` → `1 passed`
+- 前端：`npm.cmd run typecheck` → 通过

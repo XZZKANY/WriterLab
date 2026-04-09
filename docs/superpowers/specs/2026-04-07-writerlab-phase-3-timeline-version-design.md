@@ -216,3 +216,11 @@ phase-3 第一轮完成后，应得到以下结果：
 - phase-3 的验证命令、设计与留痕文档齐全
 
 该设计已明确采用方案 A：先补 Timeline 后端合同，再收口版本/分支契约，最后做前端最小接线。后续 implementation plan 应在这个边界内展开，而不是重新定义 phase-3。
+
+## 9. 当前实施状态（2026-04-09）
+
+- Timeline 最小后端合同已落地：`2da22e2 实现 phase-3 timeline 最小后端合同`
+- SceneVersion / StoryBranch API 回归已锁定：`aafb554 收口 phase-3 版本与分支 API 回归`
+- 前端 Timeline 最小查看页已接入：`4a69a1e 接入 phase-3 timeline 最小前端查看页`
+- phase-3 第一轮当前已形成“后端合同 + 版本/分支回归 + 前端最小查看 + 本地验证”闭环
+- 验证结果：后端组合 pytest `15 passed`；前端 timeline 结构测试 `4 passed`；editor 结构测试 `1 passed`；`npm.cmd run typecheck` 通过

@@ -472,3 +472,17 @@ Expected: 远端包含 phase-3 第一轮提交链路。
 - 前端存在最小 Timeline 查看入口，并继续通过共享 API client 读取数据。
 - `versions-pane` 未被重写，editor 版本/分支链路保持可用。
 - `.codex`、spec、plan、verification 留痕完整。
+
+## 2026-04-09 实施回填
+
+- [x] Task 1：Timeline 失败基线已提交（`1f8c2d0`）
+- [x] Task 2：Timeline 后端最小合同已提交（`2da22e2`）
+- [x] Task 3：版本与分支 API 回归已提交（`aafb554`）
+- [x] Task 4：前端 Timeline 最小查看页已提交（`4a69a1e`）
+- [x] Task 5：已完成总验证与留痕收口
+
+### 总验证结果
+- 后端：`pytest tests/test_timeline_domain_contracts.py tests/test_story_version_branch_contracts.py tests/test_project_scene_contracts.py tests/test_branch_service.py -q` → `15 passed`
+- 前端：`node tests/features/timeline-domain-contract.test.mjs` → `4 passed`
+- 前端：`node tests/features/editor-workspace-structure.test.mjs` → `1 passed`
+- 前端：`npm.cmd run typecheck` → 通过
