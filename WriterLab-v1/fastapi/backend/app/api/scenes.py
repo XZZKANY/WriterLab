@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.scene import Scene
 from app.repositories.scene_repository import (
     get_scene as get_scene_record,
     get_scene_version as get_scene_version_record,
@@ -16,7 +17,7 @@ from app.schemas.scene_context import SceneContextResponse
 from app.schemas.scene_version import RestoreVersionResponse, SceneVersionResponse
 from app.services.context_service import build_scene_context
 from app.services.scene_status_service import SCENE_STATUS_DRAFT, mark_scene_status
-from app.services.scene_version_service import create_scene_version, list_scene_versions, restore_scene_version
+from app.services.scene_version_service import create_scene_version, restore_scene_version
 
 router = APIRouter(prefix="/api/scenes", tags=["scenes"])
 
