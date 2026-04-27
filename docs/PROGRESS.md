@@ -814,3 +814,64 @@ T-6.B 已基本完成。下一轮可选：
 - T-9：删根目录历史产物（pgvector-src/ vs_BuildTools.exe 等）
 - 是否对 workflow_execution/persistence/runtime 三个新模块补直测（现有 545 通过 facade 间接覆盖）
 - 是否提交
+
+---
+
+## 2026-04-28 第 9 轮：T-27 workflow 直测 + T-9 历史产物清理 + T-8 仓库顶层重组
+
+### 入场
+
+- HEAD: 3614496（第 8 轮收尾 commit）
+- 后端：545 passed；前端：17/17 passed；tsc / ESLint 干净。
+- 用户同时授权 T-8 / T-9 / workflow 直测三件事。
+
+### 本轮做了什么
+
+**T-27 workflow 直测（+31 用例）：**
+
+| 文件 | 用例 | 覆盖点 |
+|---|---|---|
+| `apps/backend/tests/test_workflow_persistence.py` | 20 | `_attach_step_attempts`（4）、`_resolve_project_id`（3）、`_queue_depth`（2）、`_heartbeat_run`（2）、`_set_run_state`（6，含 running/queued/completed/cancelled/waiting_review/error）、`_attach_run_transient_fields` None 短路、`_create_memory_candidate` 无 project_id/空 text 短路 |
+| `apps/backend/tests/test_workflow_runtime.py` | 11 | `recover_expired_workflow_runs`（6，含无过期/有 checkpoint/next_step/无 checkpoint 失败/needs_merge 强制失败/多条混合）、`_claim_next_workflow_run`（5，含空队列/设 running+worker/started_at 初始化/保留已有 started_at/lease 时长）|
+
+验证：pytest **576 passed**（545 + 31）。
+
+**T-9 历史产物清理：**
+- 删除 `pgvector-src/`、`vs_BuildTools.exe`、`install-pgvector.cmd`、`codex_probe.obj`、`uvicorn-8012.*.log`、根目录 `logs/`。
+- commit: `chore: T-9 删除根目录历史产物`
+
+**T-8 仓库顶层重组（309 个文件变更）：**
+
+7 个阶段全部完成：
+
+| 阶段 | 内容 |
+|---|---|
+| 1 | 建新骨架：`apps/ docs/{architecture,project,runbooks,verification}/ scripts/{dev,check,smoke,data}/` |
+| 2 | `WriterLab-v1/fastapi/backend` → `apps/backend`（含 .env 恢复）；`WriterLab-v1/Next.js/frontend` → `apps/frontend`（84 个追踪文件） |
+| 3 | 9 个脚本移到 `scripts/{dev,check,smoke,data}/` |
+| 4 | 9 份文档移到 `docs/{architecture,project,runbooks,verification}/`；4 个根目录跟踪文件移到 `docs/` |
+| 5 | 修复所有路径引用：脚本内路径、`apps/backend/app/api/runtime.py`（推荐命令）、全部 README 文件 |
+| 6 | 新建 `docs/architecture/repository-layout.md`（旧→新路径映射表）；重写根 `README.md` |
+| 7 | `git rm -r WriterLab-v1/`（17 个剩余追踪文件）；`rm -rf WriterLab-v1/`（物理清理含 gitignored 残留） |
+
+commit: `refactor(repo): T-8 仓库顶层重组 — WriterLab-v1/ → apps/docs/scripts`
+
+### 当前状态
+
+- 后端：**576 passed**（截至 T-27）；新路径 `apps/backend/`
+- 前端：17/17 passed；tsc clean；ESLint exit 0；新路径 `apps/frontend/`
+- 仓库根：已无 `WriterLab-v1/`；结构为 `apps/ docs/ scripts/ .codex/ AGENTS.md README.md`
+- pyflakes：干净
+
+### 用户需手动完成（venv 迁移）
+
+```powershell
+# 在新路径重建 venv（旧 .venv 在 WriterLab-v1/fastapi/backend/.venv，现已随物理清理一起删除）
+cd D:\WritierLab\apps\backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+# 前端依赖（node_modules 不在 git 追踪内，需重装）
+cd D:\WritierLab\apps\frontend
+npm install
+```

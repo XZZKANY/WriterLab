@@ -241,6 +241,14 @@
 
 验证：pytest **545 passed**（390 + 155）；前端 typecheck 干净；ESLint exit 0；前端测试 17 用例全过。
 
+### T-27 workflow_execution / persistence / runtime 三模块直测（+31 用例）
+
+- **test_workflow_persistence.py**（20）：`_attach_step_attempts`（4 变体）、`_resolve_project_id`（3）、`_queue_depth`（2）、`_heartbeat_run`（2）、`_set_run_state`（6 变体含 running/queued/completed/cancelled/waiting_review/error）、`_attach_run_transient_fields` None 短路、`_create_memory_candidate` 无 project_id/空 text 短路。
+- **test_workflow_runtime.py**（11）：`recover_expired_workflow_runs` 无过期/有 checkpoint 排队恢复/next_step 计算/无 checkpoint 失败/needs_merge 强制失败/多条混合；`_claim_next_workflow_run` 空队列/设 running+worker/started_at 初始化/保留已有 started_at/lease 时长匹配常量。
+- 全部通过 FakeDB/SimpleNamespace + monkeypatch workflow_service facade 隔离真实 DB。
+- 验证：pytest **576 passed**（545 + 31）。
+- **状态**：✅ 完成（2026-04-28）
+
 ## 待办（已识别但本轮未处理，需用户确认或后续阶段）
 
 ### T-6 后端两大 service 文件按职责拆分
@@ -272,17 +280,17 @@
 - **决策**：本次以 `TASKS.md / PROGRESS.md / ARCHITECTURE.md / RESEARCH.md` 为长期记录主轴；旧 `.codex/` 文件保留不动，不清理也不追加。
 - **状态**：⚪ 不处理（按用户最新流程指引）
 
-### T-8 仓库结构 `apps / docs / scripts` 重组
+### T-8 仓库结构 `apps / docs / scripts` 重组 ✅
 
-- **背景**：`docs/superpowers/specs/2026-04-24-repository-restructure-design.md` 与 `plans/2026-04-24-repository-restructure-plan.md` 已经详尽规划了把 `WriterLab-v1/` 上提为 `apps/{backend,frontend}` 的方案。
-- **决策**：**不在本轮执行**。这是大规模目录搬迁 + 删除大量旧路径，按用户新指引必须先确认。
-- **状态**：⚪ 冻结，等用户决定是否启动
+- **完成**：`WriterLab-v1/fastapi/backend` → `apps/backend`；`WriterLab-v1/Next.js/frontend` → `apps/frontend`；脚本分到 `scripts/{dev,check,smoke,data}`；文档分到 `docs/{architecture,project,runbooks,verification}`；根目录跟踪文件移到 `docs/`；所有路径引用修复；新增 `docs/architecture/repository-layout.md`；重写 `README.md`；`WriterLab-v1/` 全部删除。
+- **验证**：309 文件变更，git rename 链完好，无旧路径残留（docs/architecture/refactor 文件除外，保留迁移说明）。
+- **状态**：✅ 完成（2026-04-28）
 
-### T-9 调研 `pgvector-src/` 与 `vs_BuildTools.exe` 是否要保留
+### T-9 删除根目录历史产物 ✅
 
-- **背景**：根目录有 `pgvector-src/`（pgvector 源码）和 `vs_BuildTools.exe`（4.5MB 安装器）；`install-pgvector.cmd`、`uvicorn-8012.*.log`（空）、`codex_probe.obj` 等环境历史产物。
-- **决策**：**不删**。属于"删除大量文件 + 改环境装机流程"，需用户确认。
-- **状态**：🔵 待用户确认
+- **完成**：删除 `pgvector-src/`、`vs_BuildTools.exe`、`install-pgvector.cmd`、`codex_probe.obj`、`uvicorn-8012.*.log` 等历史产物。
+- **验证**：根目录仅保留 `README.md`、`AGENTS.md`、`.gitignore`、`apps/`、`docs/`、`scripts/`、`.codex/`。
+- **状态**：✅ 完成（2026-04-28）
 
 ## 风险与冻结项
 
