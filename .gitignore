@@ -20,6 +20,8 @@ uvicorn-*.log
 **/.runtime/
 **/.env
 **/.env.*
+# 允许 .env.example 入库，作为新机器装机参考。
+!**/.env.example
 
 # Local editor / OS files
 .DS_Store
