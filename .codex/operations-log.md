@@ -1110,3 +1110,212 @@
 - 新鲜自检结果：占位扫描无命中；header 必备字段齐全；任务数为 `5`
 - 当前结论：plan 继续保持“workflow/context 后端合同 -> runtime 合同 -> 前端消费合同 -> 留痕总验证”的顺序
 - 下一步可在用户选择后按 `subagent-driven-development` 或 `executing-plans` 执行
+
+## 2026-04-09 runtime-debug-workbench 基线失败调查
+
+- 目标：确认 `runtime-debug-workbench.test.mjs` 的失败是否为 phase-4 新引入回归。
+- fresh reproduction：`node D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/Next.js/frontend/tests/features/runtime-debug-workbench.test.mjs`
+  - 结果：失败，稳定断在第 21 行 `assert.equal(source.includes("Provider Runtime"), true)`。
+- 关键源码证据：
+  - `runtime-debug-workbench.tsx:181` 当前为 `运行时就绪度`
+  - `git blame -L 181,181` 指向提交 `1795214`（2026-04-06）
+  - `git blame -L 21,21` 显示测试断言来自 `0a93c96`（2026-04-04）
+- 历史分叉结论：
+  - `0a93c96` 引入 runtime workbench 时，源码与测试都使用 `Provider Runtime`
+  - `1795214` 将页面文案切为 `运行时就绪度`，但未同步更新源码契约测试
+- 交叉验证：`scripts/frontend_live_smoke.mjs` 当前 `/runtime` marker 同样要求 `运行时就绪度`、`运行时自检告警`
+- 判定：这是 `master` 基线中已存在的测试预期漂移，不是 phase-4 worktree 新引入的功能回归。
+- 处理建议：先做最小基线收口（同步 `runtime-debug-workbench.test.mjs` 到当前中文 marker 并复跑），再开始 phase-4 Task 1。
+
+## 2026-04-09 runtime-debug-workbench 基线收口结果
+
+- 修改文件：`D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/Next.js/frontend/tests/features/runtime-debug-workbench.test.mjs`
+- 变更内容：将过时断言 `Provider Runtime` 同步为当前页面契约 `运行时就绪度`
+- 说明：未修改任何 runtime 页面生产源码，本轮只收口测试层漂移
+- fresh 验证：
+  - `node D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/Next.js/frontend/tests/features/runtime-debug-workbench.test.mjs` → 1 passed
+  - `node D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/Next.js/frontend/tests/features/editor-workspace-structure.test.mjs` → 1 passed
+  - `npm.cmd run typecheck`（workdir=`D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/Next.js/frontend`）→ 通过
+- 结论：phase-4 开工前的前端关键基线已转绿，可进入 Task 1
+
+## 2026-04-09 phase-4 Task 1 进行中：workflow/context 后端合同基线
+
+- 已在以下测试文件补齐 phase-4 Task 1 合同断言：
+  - `D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/services/workflow_service_suite.py`
+  - `D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/services/context_service_suite.py`
+  - `D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/api/api_routes_suite.py`
+- fresh 验证：
+  - `D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/.venv/Scripts/python.exe -m pytest D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/test_workflow_service.py D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/test_context_service.py D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/test_api_routes.py -q`
+  - 结果：`38 passed in 1.44s`
+- 结论：Task 1 新增合同断言首次即绿，应记录为“当前实现已满足本项合同”，后续可直接进入 Task 2 的生产实现收口准备。
+
+## 2026-04-09 phase-4 Task 1 纠偏：补齐 `_workflow_output` 失败基线
+
+- 复核生产实现发现：`workflow_service.py` 的 `_workflow_output()` 当前未返回 `context_compile_snapshot`。
+- 因此将 `workflow_service_suite.py` 中原先过宽的 run-level 断言改为直接锁定 `_workflow_output()` 返回结构。
+- fresh 验证：
+  - `D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/.venv/Scripts/python.exe -m pytest D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/test_workflow_service.py D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/test_context_service.py D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/test_api_routes.py -q`
+  - 结果：`1 failed, 37 passed`
+  - 失败点：`test_workflow_output_includes_context_compile_snapshot_contract`，`KeyError: 'context_compile_snapshot'`
+- 结论：Task 1 现在已形成真实红灯基线，下一步进入 Task 2 的生产实现修复。
+
+## 2026-04-09 phase-4 Task 2：workflow/context 后端合同收口
+
+- 最小修复文件：`D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/app/services/workflow/workflow_service.py`
+- 修复点：在 `_workflow_output()` 返回结构中补入 `"context_compile_snapshot": run.context_compile_snapshot`
+- 保持不变：
+  - `D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/app/api/ai.py`
+  - `D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/app/services/context/context_service.py`
+  - `D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/app/schemas/workflow.py`
+- fresh 验证：
+  - `D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/.venv/Scripts/python.exe -m pytest D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/test_workflow_service.py D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/test_context_service.py D:/WritierLab/.worktrees/phase4-workflow-context-runtime-exec/WriterLab-v1/fastapi/backend/tests/test_api_routes.py -q`
+  - 结果：`38 passed in 1.50s`
+
+## 2026-04-24 仓库结构标准化重构设计文档写入与自检
+
+时间：2026-04-24 00:00:00
+
+### 编码前检查 - 仓库结构标准化重构设计
+
+□ 已查阅上下文摘要文件：`D:/WritierLab/.codex/context-summary-repository-restructure.md`
+□ 将使用以下可复用组件：
+- `D:/WritierLab/README.md`：仓库级入口文档现状
+- `D:/WritierLab/WriterLab-v1/readme.md`：旧应用壳层入口文档
+- `D:/WritierLab/WriterLab-v1/docs/local-verification-zh.md`：本地验证总入口
+- `D:/WritierLab/WriterLab-v1/docs/runtime-notes.md`：运行手册与 smoke matrix
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/tests/README.md`：后端测试索引
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/tests/README.md`：前端测试索引
+- `D:/WritierLab/WriterLab-v1/scripts/*`：脚本职责基线
+□ 将遵循命名约定：设计文档、日志与审查文本全部使用简体中文；目录与脚本文件名保留既有英文命名风格
+□ 将遵循代码风格：沿用现有 spec 文档“目标、范围、基线、方案、验证、风险、结论”结构
+□ 确认不重复造轮子，证明：本轮直接升级既有仓库入口、运行手册、验证文档与脚本组织方式，不新增平行 README、平行 runbook 或第二套脚本体系
+
+### 工具可用性说明
+
+- 当前会话未提供 `desktop-commander`、`context7`、`github.search_code`、`sequential-thinking`、`shrimp-task-manager` 等 AGENTS.md 中优先要求的专用工具。
+- 补救措施：改用仓库内现有文档、脚本、测试索引、Git 历史与结构化人工分析完成上下文收集，并把限制与替代路径写入本次上下文摘要和操作日志。
+
+### 实际改动
+
+- 新增 `D:/WritierLab/.codex/context-summary-repository-restructure.md`
+  - 汇总仓库结构重构相关的相似实现、脚本职责、文档现状、验证入口与风险点
+- 新增 `D:/WritierLab/docs/superpowers/specs/2026-04-24-repository-restructure-design.md`
+  - 写入仓库结构标准化重构设计文档
+  - 明确方案选择、目标拓扑、迁移规则、兼容策略、验证设计、实施顺序与验收标准
+- 更新 `D:/WritierLab/.codex/operations-log.md`
+  - 记录本轮上下文、工具限制、自检结论与设计边界
+- 更新 `D:/WritierLab/.codex/verification-report.md`
+  - 追加本轮设计文档审查报告
+
+### 编码后声明 - 仓库结构标准化重构设计
+
+#### 1. 复用了以下既有组件
+
+- `README.md`：继续作为仓库总入口，而不是新增平行总览文档
+- `WriterLab-v1/readme.md`：作为旧结构下应用入口的基线来源
+- `WriterLab-v1/docs/local-verification-zh.md`：作为新验证文档体系的内容来源
+- `WriterLab-v1/docs/runtime-notes.md`：作为新 runbook 体系的内容来源
+- `WriterLab-v1/fastapi/backend/tests/README.md` 与 `WriterLab-v1/Next.js/frontend/tests/README.md`：作为测试索引迁移来源
+- `WriterLab-v1/scripts/*`：作为脚本职责拆分来源
+
+#### 2. 遵循了以下项目约定
+
+- 命名约定：spec 文件继续落在 `docs/superpowers/specs/`，使用日期前缀命名
+- 代码风格：文档继续采用分章节设计说明，不把实现细节直接混进高层结构结论
+- 文件组织：上下文摘要、操作记录、验证报告继续写入仓库本地 `.codex/`
+
+#### 3. 对比了以下相似实现
+
+- `README.md`：保留仓库入口职责，但后续会改成新结构导航
+- `WriterLab-v1/readme.md`：保留其“模块与命令入口”信息来源，不保留其历史壳层角色
+- `WriterLab-v1/docs/local-verification-zh.md` 与 `runtime-notes.md`：保留内容价值，但未来按 `verification / runbooks` 职责分拆承接
+
+#### 4. 未重复造轮子的证明
+
+- 已检查根 README、子 README、运行手册、本地验证说明、测试索引与脚本目录
+- 结论是“重组并上提既有材料”而不是“新造第二套文档和脚本层”
+- 目标拓扑中的 `apps / docs / scripts` 直接吸纳现有内容，不引入额外平行体系
+
+### 本地验证结果
+
+- `docs/superpowers/specs/2026-04-24-repository-restructure-design.md`
+  - 已写入并完成占位扫描与人工复核
+- `D:/WritierLab/.codex/context-summary-repository-restructure.md`
+  - 已包含 3 个以上相似实现、可复用组件、测试策略、依赖关系与风险点
+- 本轮未运行前后端代码测试
+  - 原因：当前只完成设计文档与留痕输出，尚未进入 implementation plan 和代码实施阶段
+
+## 2026-04-24 仓库结构标准化重构 implementation plan 写入与自检
+
+时间：2026-04-24 00:20:00
+
+### 编码前检查 - 仓库结构标准化重构 implementation plan
+
+□ 已查阅设计文档：`D:/WritierLab/docs/superpowers/specs/2026-04-24-repository-restructure-design.md`
+□ 已查阅参考计划：
+- `D:/WritierLab/docs/superpowers/plans/2026-04-09-writerlab-phase-4-workflow-context-runtime-plan.md`
+- `D:/WritierLab/docs/superpowers/plans/2026-04-07-writerlab-phase-3-timeline-version-plan.md`
+□ 已查阅真实结构与配置：
+- `D:/WritierLab/WriterLab-v1/Next.js/frontend/package.json`
+- `D:/WritierLab/WriterLab-v1/fastapi/backend/requirements.txt`
+- `D:/WritierLab/WriterLab-v1/scripts/*`
+- `D:/WritierLab/WriterLab-v1/docs/*`
+□ 将遵循命名约定：plan、日志与审查内容全部使用简体中文；脚本与目录标识符沿用既有英文命名
+□ 将遵循代码风格：沿用仓库现有 implementation plan 的 `Goal / Architecture / Tech Stack / 范围与 Gate / 文件职责 / Task / 完成标准 / 执行交接` 结构
+□ 确认不重复造轮子，证明：本轮 plan 直接承接现有 spec、README、runbook、verification 文档与脚本目录，不新建平行任务体系
+
+### 工具链执行说明
+
+- 已按顺序补做：`sequential-thinking -> shrimp-task-manager(plan_task / analyze_task / reflect_task / split_tasks) -> 写入 plan`
+- 当前会话仍缺少 `writing-plans` skill 与 AGENTS.md 中部分优先工具，因此采用仓库内现有 plan 模板 + 结构化任务管理工具作为替代，并在此留痕
+
+### 实际改动
+
+- 新增 `D:/WritierLab/docs/superpowers/plans/2026-04-24-repository-restructure-plan.md`
+  - 写入仓库结构标准化重构 implementation plan
+  - 明确 6 个任务：骨架目录、应用迁移、脚本分层、文档重写、旧路径修复、旧壳删除与总验证
+- 更新 `D:/WritierLab/.codex/operations-log.md`
+  - 记录本轮 plan 写入、自检、工具链与任务分解结果
+- 更新 `D:/WritierLab/.codex/verification-report.md`
+  - 追加本轮 implementation plan 审查报告
+
+### 编码后声明 - 仓库结构标准化重构 implementation plan
+
+#### 1. 复用了以下既有组件
+
+- `docs/superpowers/specs/2026-04-24-repository-restructure-design.md`：本轮 plan 的直接上游规格
+- `docs/superpowers/plans/2026-04-09-writerlab-phase-4-workflow-context-runtime-plan.md`：现有 plan 结构模板
+- `docs/superpowers/plans/2026-04-07-writerlab-phase-3-timeline-version-plan.md`：任务拆解与回填结构参考
+- `WriterLab-v1/Next.js/frontend/package.json` 与 `WriterLab-v1/fastapi/backend/requirements.txt`：应用真实位置证据
+- `WriterLab-v1/scripts/*` 与 `WriterLab-v1/docs/*`：脚本和文档迁移来源
+
+#### 2. 遵循了以下项目约定
+
+- 命名约定：plan 文件继续落在 `docs/superpowers/plans/`，使用日期前缀命名
+- 代码风格：任务顺序、文件职责、验证命令与执行交接都保持与既有 plan 模板一致
+- 文件组织：上下文、日志与审查仍写入仓库本地 `.codex/`
+
+#### 3. 对比了以下相似实现
+
+- `phase-4` 计划：复用了其 header、范围与 Gate、文件职责、Task 与完成标准结构
+- `phase-3` 计划：复用了其“任务拆解 + 实施回填”组织方式
+- 当前 spec：把 spec 中确认的目标拓扑、迁移策略与验收标准转写为可执行任务，而不是重新定义方案
+
+#### 4. 未重复造轮子的证明
+
+- 通过 `shrimp-task-manager` 已将本轮任务拆成 6 个原子任务，和 implementation plan 内容一一对应
+- 计划内容直接吸纳既有仓库文档、脚本和配置现实，不额外创造第二套目录治理模型
+
+### 本地验证结果
+
+- `docs/superpowers/plans/2026-04-24-repository-restructure-plan.md`
+  - 已写入并完成人工复核
+- implementation plan 已覆盖：
+  - apps 迁移
+  - scripts 分层
+  - docs 重写
+  - 旧路径修复
+  - 旧壳删除
+  - 总验证与留痕
+- 本轮未开始实际结构迁移
+  - 原因：当前阶段仅产出 implementation plan，等待用户 review gate 后再实施

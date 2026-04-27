@@ -584,3 +584,233 @@ T-6.B 已基本完成。下一轮可选：
 - T-6.A4 workflow_service 后半段拆分（中-高风险，需独立 plan）
 - 低风险维护任务
 - **建议用户先 commit**（T-6 全系列已完成，是合理的 commit 边界，避免工作树继续累积）
+
+
+---
+
+## 2026-04-27 第 7 轮：上课托管模式（repository / 小 service / 路由 测试补充）
+
+### 入场
+
+- 用户进入"上课托管模式"，要求自动推进低风险任务，不停在总结。
+- 起点：第 6 轮已 commit + push 到 origin/master（HEAD 3614496）。
+- 工作树：6 项历史遗留（.codex / docs/superpowers），本轮**继续不动**。
+- 后端 baseline：pytest 390 passed；前端 tsc / eslint 干净；前端 14 用例。
+
+### 本轮做了什么
+
+按"低风险高价值"原则，给当前没直接测试覆盖的模块逐个补：
+
+| 模块 | 用例数 | 文件 |
+|---|---|---|
+| ollama_service | 12 | tests/test_ollama_service.py |
+| scene_analysis_store_service | 13 | tests/test_scene_analysis_store_service.py |
+| ai_run_service | 7 | tests/test_ai_run_service.py |
+| project_repository | 10 | tests/test_project_repository.py |
+| lore_repository | 12 | tests/test_lore_repository.py |
+| timeline_repository | 8 | tests/test_timeline_repository.py |
+| scene_repository | 8 | tests/test_scene_repository.py |
+| workflow_repository | 4 | tests/test_workflow_repository.py |
+| health_route | 7 | tests/test_health_route.py |
+| settings_route | 5 | tests/test_settings_route.py |
+| scenes-workflow-contract（前端） | 3 | tests/features/scenes-workflow-contract.test.mjs |
+
+后端 +86 用例（390 → 476）；前端 +3 用例（14 → 17）。
+
+### 关键技术点
+
+- 所有 repository / service / route 测试都用 FakeQuery + RoutingDB（按 model.__name__ 路由）的轻量 fake，不触达真实 PostgreSQL。
+- ollama_service 测试用 monkeypatch 替换 `httpx.Client` 与 `ollama_generate`；验证 `trust_env=False`（本地调用必须绕过 HTTP 代理，否则 localhost 会被代理转发后 502）。
+- health_route 测试用 monkeypatch 替换 5 个上游 service 函数 + `app.dependency_overrides[get_db]`，单独验证组装逻辑。
+- settings_route 测试用相同 dependency_overrides 模式 + monkeypatch 替换 provider_settings_service。
+
+### 跳过的候选（边际效益低）
+
+- `timeline_service.py`（19 行纯转发层）：完全是 `xx_record(db, ...)` 包装，由 timeline_repository 测试间接覆盖。
+- `delete_project` 级联清理：涉及十多个 model + SQLAlchemy `or_` / `.in_` / `.delete(synchronize_session=False)` 等内部机制；FakeDB 难以忠实模拟；由集成测试 `tests/api/api_routes_suite.py::test_project_delete_endpoint` 间接守护。
+- `app/api/knowledge.py` 路由：复杂度高，多个 endpoints + service mock 工作量大；推迟。
+- `app/api/timeline_events.py` 路由：已被 `tests/test_timeline_domain_contracts.py` 间接覆盖。
+
+### 修改的文件清单
+
+**新建**（11 个）：
+- `WriterLab-v1/fastapi/backend/tests/test_ollama_service.py`
+- `WriterLab-v1/fastapi/backend/tests/test_scene_analysis_store_service.py`
+- `WriterLab-v1/fastapi/backend/tests/test_ai_run_service.py`
+- `WriterLab-v1/fastapi/backend/tests/test_project_repository.py`
+- `WriterLab-v1/fastapi/backend/tests/test_lore_repository.py`
+- `WriterLab-v1/fastapi/backend/tests/test_timeline_repository.py`
+- `WriterLab-v1/fastapi/backend/tests/test_scene_repository.py`
+- `WriterLab-v1/fastapi/backend/tests/test_workflow_repository.py`
+- `WriterLab-v1/fastapi/backend/tests/test_health_route.py`
+- `WriterLab-v1/fastapi/backend/tests/test_settings_route.py`
+- `WriterLab-v1/Next.js/frontend/tests/features/scenes-workflow-contract.test.mjs`
+
+**修改**：
+- TASKS.md（新增 T-26 条目）
+- PROGRESS.md（本节）
+
+### 当前状态
+
+- 后端：**476 passed**（110 → 476，T-6 起累计 +366）
+- 前端 typecheck / eslint / 17 测试：全过
+- pyflakes：干净（除 db/base.py aggregator + ai_gateway_service.py 7 个故意保留 re-export）
+- 没有外部 API 行为变更、没有 git commit / push、没有删大量文件
+
+### 下一步
+
+继续选低风险任务推进。剩余候选：
+- `app/api/knowledge.py` 路由契约（复杂度中，可拆 1-2 个 endpoint 先做）
+- `app/api/branches.py` 路由契约
+- `app/api/lore_entries.py` / `app/api/characters.py` / `app/api/locations.py` 路由契约
+- `app/api/projects.py`、`app/api/books.py`、`app/api/chapters.py` 简单路由契约
+- 检查 frontend `shared/ui/` 组件是否需要补契约测试
+- 文档完善：更新 ARCHITECTURE / RESEARCH 测试覆盖统计
+
+---
+
+## 2026-04-27 第 7 轮（续 1）：路由层契约补充
+
+继续上课托管低风险节奏。
+
+### 本轮做了什么
+
+补 3 个路由契约文件，覆盖之前没直接命中的 router shells：
+
+| 模块 | 用例数 | 文件 |
+|---|---|---|
+| projects / books / chapters 路由 | 12 | tests/test_project_book_chapter_routes.py |
+| characters / locations / lore_entries 路由 404 + shape | 12 | tests/test_lore_routes.py |
+| vn export / consistency scan 路由 | 6 | tests/test_vn_consistency_routes.py |
+
+后端 +30 用例（476 → **506**）。
+
+### 关键技术点
+
+- `_RecordingDB` 模式：fake DB 在 `refresh()` 时给 ORM 实例填上 id + created_at/updated_at，模拟真实 SQLAlchemy `db.add() → commit() → refresh()` 流程，让 router 直接返回 Pydantic Response 时不会因为缺字段挂掉。
+- 测试 `from_attributes=True` Pydantic 转换时，必须覆盖 ResponseModel **所有** required 字段。bug 现场：`SceneResponse` 漏 `pov_character_id / location_id / time_label / goal / conflict / outcome / must_include / must_avoid / draft_text / scene_version`，第一次写 fake 时没补全 → 422；同样 `ConsistencyIssueResponse` 漏 `status / updated_at` → 422。
+- `monkeypatch.setattr(module, "name", fake)` 替换 router 模块层引入的 service 函数（如 `consistency_module.get_scene_record`、`projects_module.delete_project_query`），不需要 patch 全路径。
+- `app.dependency_overrides[get_db] = lambda: object()` 是对 FastAPI 路由测试的标准 dependency 注入，`object()` 占位即可，因为真正用到 db 的函数都被 monkeypatch 替换。
+
+### 修改的文件清单
+
+**新建**（3 个）：
+- `WriterLab-v1/fastapi/backend/tests/test_project_book_chapter_routes.py`
+- `WriterLab-v1/fastapi/backend/tests/test_lore_routes.py`
+- `WriterLab-v1/fastapi/backend/tests/test_vn_consistency_routes.py`
+
+**修改**：
+- PROGRESS.md（本节）
+- TASKS.md（T-26 计数更新）
+
+### 当前状态
+
+- 后端：**506 passed**（110 → 506，T-6 起累计 +396）
+- 前端 typecheck / eslint / 17 测试：全过
+- pyflakes 干净
+- 工作树继续累积新测试文件 + 6 项历史遗留；**没有 commit / push**
+
+---
+
+## 2026-04-27 第 7 轮（续 2）：knowledge / ai / scenes 三大路由的精细契约
+
+继续上课托管。这一段补的是**业务复杂度高的路由**的契约层。
+
+### 本轮做了什么
+
+| 模块 | 用例数 | 文件 | 核心覆盖点 |
+|---|---|---|---|
+| knowledge 路由 | 14 | tests/test_knowledge_routes.py | 7 个 endpoint 的 project-not-found 404；search 的 top_k 钳位（1-10）；source_kinds 的 CSV 解析；reindex 的 backend label 透传；style_memory confirm 的 404 |
+| ai 路由 | 15 | tests/test_ai_routes.py | analyze/write/revise 的"scene 不存在不返回 4xx 而是 200 + success=False"约定；AIServiceError → response 包装；workflow get/resume/override/cancel 的 404；resume/override 的 ValueError → 409 |
+| scenes 路由 | 10 | tests/test_scenes_routes.py | PATCH 乐观锁（expected_scene_version 不匹配 → 409）；只改元数据时不刷版本；改 draft_text 时 scene_version+1 + 自动 mark "draft" + 创建 SceneVersion；显式传 status 时不会被覆盖；3 个 GET 与 restore 的 404 |
+
+后端 +39 用例（506 → **545**）。
+
+### 关键技术点 / 设计约定守住的
+
+- **scene-AI 三件套的"伪 404"约定**：`/analyze-scene` `/write-scene` `/revise-scene` 在 scene 不存在时 **不抛 HTTPException**，而是返回 `200 + success=False + message="Scene not found"` —— 这是有意设计，让前端用统一的 `response.success` 分支处理所有 AI 失败模式。这次明确把它锁进了测试。
+- **PATCH /scenes 的乐观锁完整路径**：`expected_scene_version` 不匹配 → 409；`draft_text` 真改 → scene_version+1 + 自动建 SceneVersion；同时改了 `status` → 不被 mark_scene_status 覆盖；只改元数据 → 不刷版本。这是 4 条很容易回归的分支。
+- **api_routes_suite.py 与新测试的边界**：suite 里覆盖 happy 路径（real-ish DB + 集成式 mock），新测试只补 service-level monkeypatch + 单分支契约。互不冲突。
+
+### 中途修过的小问题
+
+- `AIErrorType.PROVIDER_ERROR / RATE_LIMIT` 不存在 —— 实际只有 `NETWORK / MODEL_OUTPUT / VALIDATION / UNKNOWN` 4 种，第一次盲写时挂；改完 PASS。
+- `ReviseMode` 是 `"trim" | "literary" | "unify"`（不是 "tighten"）。
+- `ResumeWorkflowRequest` 必填 `idempotency_key + expected_step_version`；`OverrideStepRequest` 还要 `derived_from_version + edited_reason + effective_output_snapshot`。第一次写时按 `step_key` 单字段写挂在 422，纠正后 PASS。
+
+### 修改的文件清单
+
+**新建**（3 个）：
+- `WriterLab-v1/fastapi/backend/tests/test_knowledge_routes.py`
+- `WriterLab-v1/fastapi/backend/tests/test_ai_routes.py`
+- `WriterLab-v1/fastapi/backend/tests/test_scenes_routes.py`
+
+**修改**：
+- PROGRESS.md（本节）
+- TASKS.md（T-26 计数更新）
+
+### 当前状态
+
+- 后端：**545 passed**（110 → 545，T-6 起累计 +435）
+- 前端 typecheck / eslint / 17 测试：全过
+- pyflakes 干净
+- 工作树：14 个新测试文件（pure additions，零行为变更）+ 6 项历史遗留；**没有 commit / push**
+
+### 下一轮候选（仍在上课托管节奏内）
+
+- frontend `shared/ui/` 组件契约（轻量）
+- backend `app/services/branch_service.py` / `runtime_events.py` 的小 service 直测
+- 文档：把 ARCHITECTURE 第 §10 节"测试覆盖"统计同步到 545
+- runtime route 的 self-check / events websocket 边界（涉及 asyncio，复杂度中）
+
+---
+
+## 2026-04-28 第 8 轮：T-6.A4 workflow_service.py 终轮拆分 + 文档收尾
+
+### 入场
+
+- 后端：**545 passed**；前端：17/17 passed；tsc / ESLint 干净；pyflakes 干净。
+- 工作树：14 个新测试文件 + 3 个新 workflow 子模块（已完成但未提交）+ 历史遗留 `.codex/` 文件。
+
+### 本轮做了什么
+
+**T-6.A4 完成**：`workflow_service.py` 774 行 → **191 行**（−583，−75%），拆出：
+
+| 新文件 | 内容 | 行数 |
+|---|---|---|
+| `workflow_execution.py` | `_run_scene_workflow` 主流程编排 | 294 |
+| `workflow_persistence.py` | DB 触达辅助 ~20 个函数（_create_run/_create_step/_finish_step/_set_run_state/_stable_resume_checkpoint/_vram_lock 等） | 366 |
+| `workflow_runtime.py` | runner 循环 + `recover_expired_workflow_runs` | 72 |
+
+**关键不变量保护**：三个新模块内部对协作者（`_resolve_profiles`、`_set_run_state`、`_stable_resume_checkpoint` 等）的调用均通过函数体内 lazy import 主模块解析，保证测试 `monkeypatch.setattr("app.services.workflow_service.<name>", ...)` 路径全部继续命中。主模块以 `__all__` + 顶部 re-import 暴露完整属性面。
+
+验证：pytest **545 passed**；pyflakes 干净；前端 tsc / ESLint / 17 测试全过。
+
+**文档收尾**：
+- TASKS.md：T-6.A4 标记为 ✅；T-6 状态总览更新（workflow_service.py 926 → 191 行 −79%）。
+- PROGRESS.md：追加本节（第 8 轮）。
+
+### T-6 整体完成汇总
+
+| 子任务 | 产出文件 |
+|---|---|
+| A1 | `workflow_constants.py` |
+| A2 | `workflow_prompts.py` |
+| A3 | `workflow_extractors.py` |
+| A4 | `workflow_execution.py` + `workflow_persistence.py` + `workflow_runtime.py` |
+| B1–B4.3.c | `ai_gateway_constants/costing/fixtures/views/skip_reason/provider/state/routing.py` |
+
+`workflow_service.py`：**926 → 191 行（−79%）**；`ai_gateway_service.py`：**835 → 296 行（−65%）**
+
+### 当前状态
+
+- 后端：**545 passed**；pyflakes 干净
+- 前端：17/17 passed；tsc clean；ESLint exit 0
+- 工作树：全部未 commit / 未 push（用户决定）
+
+### 待用户决定的事项
+
+- T-8：仓库顶层重组（`apps/docs/scripts`，已有完整 spec/plan）
+- T-9：删根目录历史产物（pgvector-src/ vs_BuildTools.exe 等）
+- 是否对 workflow_execution/persistence/runtime 三个新模块补直测（现有 545 通过 facade 间接覆盖）
+- 是否提交

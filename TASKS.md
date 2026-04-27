@@ -214,18 +214,46 @@
 - **test_ai_gateway_routing.py**（11）：含一个用主模块 monkeypatch 验证 `_step_runtime_profiles` lazy import `_resolve_profiles` 路径正确。
 - 验证：**pytest 390 passed**（353 + 37）；pyflakes 7 warnings 全是已知保留 re-export；前端 tsc/lint 干净。
 
+### T-26 上课托管模式：repository / 路由 / 小 service 测试补充（+155 用例 + 3 前端契约）
+
+后端 +155 用例（pytest 390 → **545**）：
+- **test_ollama_service.py**（12）：本地 Ollama 调用入口；mock httpx + ollama_generate；happy + error + 默认值 fallback + trust_env=False（绕过本地代理）。
+- **test_scene_analysis_store_service.py**（13）：create_scene_analysis_record 的 problems/suggestions 拍平 + version_id 关联 + status 覆写；list / get / get_analysis_items 查询代理；set_selected_analysis_items 重设语义；get_selected_guidance_for_scene 显式 / 缺省 analysis_id 分支；to_scene_analysis_response 打包。
+- **test_ai_run_service.py**（7）：save_ai_run 必填字段写入；可选字段透传；None parsed_response / token_usage 容忍；failure status；no scene_id 孤儿 run；jsonable_encoder 序列化 datetime / UUID。
+- **test_project_repository.py**（10）：_collect_ids 元组提取；get_project_overview None 返回 / dict 组装 / counts 求和 / 多 book 与去重 chapter；delete_project not-found 短路（级联清理由集成测试覆盖）；list_* 代理。
+- **test_lore_repository.py**（12）：3 套同构 CRUD（character/location/lore_entry）的 list/get/update_*（exclude_unset）/ delete_*。
+- **test_timeline_repository.py**（8）：list/get/create/update（exclude_unset）/delete。
+- **test_scene_repository.py**（8）：4 个简单查询代理。
+- **test_workflow_repository.py**（4）：get_workflow_run / list_workflow_steps。
+- **test_health_route.py**（7）：build_health_payload ok/degraded 切换、provider_matrix_loaded 空列表、provider_runtime_ready false、version fallback、recovered_runs 字符串清洗、GET /api/health 路由契约。
+- **test_settings_route.py**（5）：GET / PUT /api/settings/providers shape；saved_providers 仅含真存了 api_key 的 provider；部分 / 空 / 未知 provider 字段。
+- **test_project_book_chapter_routes.py**（12）：projects/books/chapters 三套简单路由；POST 创建 + response shape + 副作用计数；GET list with project_id/book_id 过滤 + UUID 校验；GET project overview 404 + payload 整组装；DELETE 404 + 成功 shape。
+- **test_lore_routes.py**（12）：characters/locations/lore_entries 路由 GET/PATCH/DELETE 404 + DELETE 成功 shape；list with project_id 过滤；priority/canonical 字段透传。
+- **test_vn_consistency_routes.py**（6）：POST /api/vn/export 三种 draft + image_prompts flag 分支；POST /api/consistency/scan 三种 issues 数（404 / 0 / N）+ summary 文案。
+- **test_knowledge_routes.py**（14）：7 个 endpoint 的 project-not-found 404；search 的 top_k 钳位（1-10）；source_kinds 的 CSV 解析；reindex 的 backend label 透传；style_memory confirm 的 404。
+- **test_ai_routes.py**（15）：analyze/write/revise 的"scene 不存在 → 200 + success=False"约定；AIServiceError → response 包装；workflow get/resume/override/cancel 的 404；resume/override 的 ValueError → 409。
+- **test_scenes_routes.py**（10）：PATCH 乐观锁（expected_scene_version 不匹配 → 409）；只改元数据时不刷版本；改 draft_text 时 scene_version+1 + 自动 mark "draft" + 建 SceneVersion；显式传 status 时不会被覆盖；3 个 GET 与 restore 的 404。
+
+前端 +3 用例（14 → 17）：
+- **scenes-workflow-contract.test.mjs**（3）：lib/api/scenes.ts 的 scene/version/branch CRUD 与 diff/restore/adopt 路径；lib/api/workflow.ts 的 analyze/write/revise + workflow 编排 + scan/export；lib/api/settings.ts 的 provider settings 双向同步。
+
+所有测试同步到当前 backend services / repositories / api 的真实接口；零行为变更；零业务逻辑修改；零新依赖。
+
+验证：pytest **545 passed**（390 + 155）；前端 typecheck 干净；ESLint exit 0；前端测试 17 用例全过。
+
 ## 待办（已识别但本轮未处理，需用户确认或后续阶段）
 
 ### T-6 后端两大 service 文件按职责拆分
 
 - **背景**：`app/services/workflow_service.py` 926 行 + `app/services/ai_gateway_service.py` 835 行，单文件巨大。
-- **状态总览**：workflow 部分已完成 A1+A2+A3；ai_gateway 部分已完成 B1+B2+B3+B4.1+B4.2+B4.3.a+B4.3.b+B4.3.c。
+- **状态总览**：所有子任务全部完成。
 
 #### 已完成
 
 - **T-6.A1** ✅ 抽 `workflow_constants.py`（10 常量 + 8 纯工具函数）
 - **T-6.A2** ✅ 抽 `workflow_prompts.py`（_planner_prompt / _style_prompt / _build_memory_candidate）
 - **T-6.A3** ✅ 抽 `workflow_extractors.py`（9 个纯快照解析与最终输出组装函数）
+- **T-6.A4** ✅ 抽 `workflow_execution.py`（_run_scene_workflow 主流程编排，294 行）+ `workflow_persistence.py`（DB 触达辅助 ~20 个函数，366 行）+ `workflow_runtime.py`（runner/recovery 内核，72 行）；主模块降至 **191 行** facade + re-export。lazy import 保护全部 monkeypatch 路径。
 - **T-6.B1** ✅ 抽 `ai_gateway_constants.py`（常量 + dataclass + 1 个 env helper）
 - **T-6.B2** ✅ 抽 `ai_gateway_costing.py`（6 个纯计算工具）
 - **T-6.B3** ✅ 抽 `ai_gateway_fixtures.py`（7 个 fixture 文本生成器）
@@ -235,13 +263,8 @@
 - **T-6.B4.3.b** ✅ 抽 `ai_gateway_state.py`（D 块 5 个 state init + record_*）
 - **T-6.B4.3.c** ✅ 抽 `ai_gateway_routing.py`（B 块 5 个 profile 解析 + 路由矩阵）
 
-`workflow_service.py` 926 → 774 行（−152，−16%）；workflow 子模块共 303 行（3 个文件）。
+`workflow_service.py` 926 → **191 行**（−735，**−79%**）；workflow 子模块共 732 行（6 个文件）。
 `ai_gateway_service.py` 835 → **296 行**（−539，**−65%**）；gateway 子模块共 826 行（8 个文件）。
-
-#### 待办
-
-- **T-6.A4** ⚪ 评估是否进一步拆 workflow_service E（DB 触达辅助）/ G（runner）。**风险中-高**：步骤工厂之间互相调用且与测试 monkeypatch 强耦合。
-- **ai_gateway_service.py** 主模块剩余 296 行已经接近自然下限：3 个 state dict + `_reset_gateway_runtime_state`（必须留主模块直接清空 dict）+ `call_ai_gateway` 公开主入口（fixture 分流 + retry 循环）+ `get_provider_runtime_state` / `summarize_provider_runtime_state` 公开 API + 大量 re-export 拉回 import 块。**进一步拆收益边际递减，建议本轮告一段落**。
 
 ### T-7 .codex/operations-log.md 与 verification-report.md 收纳
 
