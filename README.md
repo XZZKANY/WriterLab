@@ -76,6 +76,7 @@ powershell -ExecutionPolicy Bypass -File 'D:\WritierLab\scripts\check\check-fron
 
 | 文档 | 用途 |
 |------|------|
+| `docs/usage-guide-zh.md` | **使用指南**：启动、编辑器、AI 功能、工作流、分支、Provider 设置 |
 | `docs/project/project-overview-zh.md` | 模块能力、数据模型、API 总览 |
 | `docs/verification/local-verification-zh.md` | 验证顺序、smoke 覆盖、报告位置 |
 | `docs/runbooks/runtime-notes.md` | 启动顺序、故障说明、环境 caveat |
