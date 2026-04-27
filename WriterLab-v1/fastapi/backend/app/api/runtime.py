@@ -13,20 +13,20 @@ from app.schemas.runtime import (
     SmokeRegressionResponse,
     SmokeReportSummary,
 )
-from app.services.ai.ai_gateway_service import (
+from app.services.ai_gateway_service import (
     get_provider_matrix,
     get_provider_runtime_state,
     summarize_provider_runtime_state,
 )
-from app.services.knowledge.knowledge_service import vector_backend_label, vector_backend_status
+from app.services.knowledge_service import vector_backend_label, vector_backend_status
 from app.services.runtime_events import get_runtime_events
-from app.services.runtime.smoke_report_service import (
+from app.services.runtime_status_service import get_runtime_status_snapshot
+from app.services.smoke_report_service import (
     get_latest_smoke_reports,
     get_smoke_report_detail,
     get_smoke_report_regression,
     list_smoke_report_summaries,
 )
-from app.services.runtime.runtime_status_service import get_runtime_status_snapshot
 
 router = APIRouter(tags=["runtime"])
 

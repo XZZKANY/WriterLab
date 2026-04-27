@@ -2,8 +2,9 @@ import logging
 
 from sqlalchemy import inspect
 
+from app.db.schema_upgrades import apply_schema_upgrades
 from app.db.session import SessionLocal, engine
-from app.services.runtime.runtime_status_service import (
+from app.services.runtime_status_service import (
     mark_recovery_scan_completed,
     mark_schema_ready,
     mark_startup_error,
@@ -11,12 +12,11 @@ from app.services.runtime.runtime_status_service import (
     mark_workflow_runner_started,
     reset_runtime_status,
 )
-from app.services.workflow.workflow_service import (
+from app.services.workflow_service import (
     ensure_workflow_runner_started,
     is_workflow_runner_started,
     recover_expired_workflow_runs,
 )
-from app.tasks.schema_upgrades import apply_schema_upgrades
 
 logger = logging.getLogger(__name__)
 
