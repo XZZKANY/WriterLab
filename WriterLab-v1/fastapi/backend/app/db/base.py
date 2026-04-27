@@ -1,3 +1,7 @@
+# 该模块是 ORM 模型的汇聚入口：把每个 model 类都 import 一次，
+# 让 Alembic 的 autogenerate 与 Base.metadata 能看到全部表。
+# 因此这里所有 import 都是有意保留的，pyflakes 报"unused"是误判。
+# ruff: noqa: F401
 from app.db.session import Base
 from app.models.project import Project
 from app.models.book import Book
