@@ -9,13 +9,19 @@ $projectRoot = Split-Path (Split-Path $frontend -Parent) -Parent
 $logsDir = Join-Path $projectRoot "scripts\logs"
 Set-Location $frontend
 
-Write-Host "[1/2] Frontend typecheck..."
+Write-Host "[1/3] Frontend typecheck..."
 npm.cmd run typecheck
 if ($LASTEXITCODE -ne 0) {
   throw "Frontend typecheck failed."
 }
 
-Write-Host "[2/2] Frontend production build check..."
+Write-Host "[2/3] Frontend ESLint..."
+npm.cmd run lint
+if ($LASTEXITCODE -ne 0) {
+  throw "Frontend ESLint failed."
+}
+
+Write-Host "[3/3] Frontend production build check..."
 $nativePreference = Get-Variable PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue
 if ($null -ne $nativePreference) {
   $previousNativePreference = $PSNativeCommandUseErrorActionPreference
@@ -51,7 +57,7 @@ if ($LiveUiSmoke) {
   }
   $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
   $reportPath = Join-Path $logsDir "frontend-live-smoke-$timestamp.json"
-  Write-Host "[3/3] Frontend live UI smoke (editor/project/lore/runtime/settings)..."
+  Write-Host "[4/4] Frontend live UI smoke (editor/project/lore/runtime/settings)..."
   node "$projectRoot\scripts\frontend_live_smoke.mjs" "http://127.0.0.1:3000" $reportPath
   if ($LASTEXITCODE -ne 0) {
     throw "Frontend live UI smoke failed. See $reportPath"

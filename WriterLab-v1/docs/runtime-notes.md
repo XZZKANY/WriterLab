@@ -100,6 +100,6 @@
 ## Demo Data Repair
 - Demo repair is optional and not part of the normal startup path.
 - Dry run:
-  `D:\WritierLab\WriterLab-v1\.venv\Scripts\python.exe D:\WritierLab\WriterLab-v1\scripts\fix_demo_garbled_data.py`
+  `D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe D:\WritierLab\WriterLab-v1\scripts\fix_demo_garbled_data.py`
 - Apply:
-  `D:\WritierLab\WriterLab-v1\.venv\Scripts\python.exe D:\WritierLab\WriterLab-v1\scripts\fix_demo_garbled_data.py --apply`
+  `D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe D:\WritierLab\WriterLab-v1\scripts\fix_demo_garbled_data.py --apply`

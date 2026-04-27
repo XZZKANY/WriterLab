@@ -28,5 +28,5 @@
 推荐运行命令：
 
 ```powershell
-D:\WritierLab\WriterLab-v1\.venv\Scripts\python.exe -m pytest D:\WritierLab\WriterLab-v1\fastapi\backend\tests\test_workflow_service.py
+D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe -m pytest D:\WritierLab\WriterLab-v1\fastapi\backend\tests\test_workflow_service.py
 ```

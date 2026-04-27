@@ -37,7 +37,7 @@ powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\chec
 1. 关键 pytest
 
 ```powershell
-D:\WritierLab\WriterLab-v1\.venv\Scripts\python.exe -m pytest D:\WritierLab\WriterLab-v1\fastapi\backend\tests\test_api_routes.py D:\WritierLab\WriterLab-v1\fastapi\backend\tests\test_workflow_service.py
+D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe -m pytest D:\WritierLab\WriterLab-v1\fastapi\backend\tests\test_api_routes.py D:\WritierLab\WriterLab-v1\fastapi\backend\tests\test_workflow_service.py
 ```
 
 2. 后端检查脚本

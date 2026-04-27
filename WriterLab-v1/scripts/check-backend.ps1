@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 
 $backend = "D:\WritierLab\WriterLab-v1\fastapi\backend"
 $projectRoot = Split-Path (Split-Path $backend -Parent) -Parent
-$venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
+$venvPython = Join-Path $backend ".venv\Scripts\python.exe"
 $logsDir = Join-Path $projectRoot "scripts\logs"
 Set-Location $backend
 

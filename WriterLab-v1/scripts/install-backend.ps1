@@ -1,10 +1,10 @@
 $ErrorActionPreference = "Stop"
 
+# 后端 venv 与 requirements.txt 都落在 backend 目录内，与 alembic.ini / .env 一起。
 $backend = "D:\WritierLab\WriterLab-v1\fastapi\backend"
 Set-Location $backend
 
-$projectRoot = Split-Path (Split-Path $backend -Parent) -Parent
-$venvPath = Join-Path $projectRoot ".venv"
+$venvPath = Join-Path $backend ".venv"
 $venvPython = Join-Path $venvPath "Scripts\python.exe"
 $pythonCmd = (Get-Command python -ErrorAction Stop).Source
 
@@ -24,6 +24,6 @@ if ($needsRecreate) {
 }
 
 & $venvPython -m pip install --upgrade pip
-& $venvPython -m pip install -r ".\requirements.codex.txt"
+& $venvPython -m pip install -r ".\requirements.txt"
 
 Write-Host "Backend dependencies installed."

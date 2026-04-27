@@ -58,27 +58,51 @@ WritierLab/
 
 ## 快速启动
 
-建议先使用现有脚本，再手工启动单个模块。
+> **重要**：后端 venv 实际位于 `WriterLab-v1\fastapi\backend\.venv\`，不是 `WriterLab-v1\.venv\`。下面的命令已对齐真实路径。
+
+### 0. 一次性初始化（新机器）
+
+后端：
+
+```powershell
+# 1) 创建 venv 与装依赖
+py -3.10 -m venv 'D:\WritierLab\WriterLab-v1\fastapi\backend\.venv'
+& 'D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe' -m pip install -r 'D:\WritierLab\WriterLab-v1\fastapi\backend\requirements.txt'
+
+# 2) 配置数据库连接：复制 .env.example -> .env，按本机 PostgreSQL 改 DATABASE_URL
+Copy-Item 'D:\WritierLab\WriterLab-v1\fastapi\backend\.env.example' 'D:\WritierLab\WriterLab-v1\fastapi\backend\.env'
+
+# 3) 跑迁移（数据库需要可访问）
+Set-Location 'D:\WritierLab\WriterLab-v1\fastapi\backend'
+& '.\.venv\Scripts\python.exe' -m alembic upgrade head
+```
+
+前端：
+
+```powershell
+Set-Location 'D:\WritierLab\WriterLab-v1\Next.js\frontend'
+npm install
+```
 
 ### 1. 启动后端
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\start-backend.ps1
+powershell -ExecutionPolicy Bypass -File 'D:\WritierLab\WriterLab-v1\scripts\start-backend.ps1'
 ```
 
-如果只想直接运行 Uvicorn，也可以使用：
+如果只想直接运行 Uvicorn：
 
 ```powershell
-& 'D:\WritierLab\WriterLab-v1\.venv\Scripts\python.exe' -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --app-dir 'D:\WritierLab\WriterLab-v1\fastapi\backend'
+& 'D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe' -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --app-dir 'D:\WritierLab\WriterLab-v1\fastapi\backend'
 ```
 
 ### 2. 启动前端
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\start-frontend.ps1
+powershell -ExecutionPolicy Bypass -File 'D:\WritierLab\WriterLab-v1\scripts\start-frontend.ps1'
 ```
 
-如果只想进入前端目录直接起开发服务：
+或者直接：
 
 ```powershell
 Set-Location 'D:\WritierLab\WriterLab-v1\Next.js\frontend'
@@ -98,25 +122,38 @@ npm.cmd run dev -- --hostname 127.0.0.1 --port 3000
 ### 前端
 
 ```powershell
-cd D:\WritierLab\WriterLab-v1\Next.js\frontend
-npm.cmd run typecheck
+Set-Location 'D:\WritierLab\WriterLab-v1\Next.js\frontend'
+
+# 类型检查
+node ./node_modules/typescript/bin/tsc --noEmit
+
+# Lint
+node ./node_modules/eslint/bin/eslint.js .
+
+# 契约测试（原生 node:test，无 jest）
+Get-ChildItem tests/features/*.test.mjs | ForEach-Object { node $_.FullName }
 ```
 
+或者使用现成脚本：
+
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\check-frontend.ps1
+powershell -ExecutionPolicy Bypass -File 'D:\WritierLab\WriterLab-v1\scripts\check-frontend.ps1'
 ```
 
 ### 后端
 
 ```powershell
-D:\WritierLab\WriterLab-v1\.venv\Scripts\python.exe -m pytest D:\WritierLab\WriterLab-v1\fastapi\backend\tests\test_api_routes.py D:\WritierLab\WriterLab-v1\fastapi\backend\tests\test_workflow_service.py
+# 全量 pytest
+& 'D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe' -m pytest 'D:\WritierLab\WriterLab-v1\fastapi\backend'
 ```
+
+或者使用现成脚本：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\check-backend.ps1
+powershell -ExecutionPolicy Bypass -File 'D:\WritierLab\WriterLab-v1\scripts\check-backend.ps1'
 ```
 
-完整说明见下方“关键文档”中的本地验证文档。
+完整说明见下方"关键文档"中的本地验证文档。
 
 ## 关键文档
 
@@ -136,6 +173,13 @@ powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\chec
 ## 已知说明
 
 - 当前主应用仍集中在 `WriterLab-v1/`，根目录更偏仓库容器与入口层。
-- 前端当前定位更接近“工作台 / 调试台”，不是完全收口的最终用户产品。
+- 前端当前定位更接近"工作台 / 调试台"，不是完全收口的最终用户产品。
 - Windows 受限 shell 下，Next.js 构建可能触发 `spawn EPERM`；现有脚本已经把它视为环境 caveat，而不是直接判定业务回归。
 - 更细的运行时行为、Smoke 报告和 Provider 状态说明，请优先查看 `WriterLab-v1/docs/runtime-notes.md`。
+
+## 长期工作记录（仓库根）
+
+- `TASKS.md`：长期任务队列（已完成 / 进行中 / 待办 / 风险冻结项）
+- `PROGRESS.md`：每轮重构完成内容、修改文件、运行命令、验证结果
+- `ARCHITECTURE.md`：当前架构拓扑、模块职责矩阵、拆分方案与架构决策
+- `RESEARCH.md`：项目用途、技术栈实测版本、易踩坑、文档存量盘点
