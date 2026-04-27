@@ -203,6 +203,9 @@ export function useRuntimeDiagnostics({
     return () => {
       active = false;
     };
+    // 该 effect 只在挂载时跑一次以拉初始诊断；setMessage 来自父组件的内联回调，
+    // 每次 render 都是新闭包；把它放进依赖会让初始化反复触发。这里有意保持空依赖。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

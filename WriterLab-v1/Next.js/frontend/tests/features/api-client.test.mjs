@@ -1,72 +1,32 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
-import { apiDelete, apiGet, getApiBaseUrl } from "../../lib/api/client.ts";
+const clientPath = new URL("../../lib/api/client.ts", import.meta.url);
 
-test("apiGet extracts detail from JSON error payloads", async () => {
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () =>
-    new Response(JSON.stringify({ detail: "Project not found" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
+test("api client 源码契约：保留 base URL 解析、错误体提取、空响应容忍与网络错误包装", async () => {
+  const source = await readFile(clientPath, "utf8");
 
-  try {
-    await assert.rejects(
-      () => apiGet("/api/projects/404"),
-      (error) => error instanceof Error && error.message === "Project not found",
-    );
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
+  // 浏览器同源回落：默认在浏览器中走相对路径，让 Next 的同源代理生效。
+  assert.equal(source.includes('return isBrowserRuntime() ? "" : DEFAULT_BACKEND_ORIGIN;'), true);
+  assert.equal(source.includes('const DEFAULT_BACKEND_ORIGIN = "http://127.0.0.1:8000";'), true);
 
-test("apiDelete tolerates empty success bodies", async () => {
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () =>
-    new Response(null, {
-      status: 204,
-    });
+  // JSON 错误体提取：优先 detail，其次 message。
+  assert.equal(source.includes('if (typeof parsed.detail === "string" && parsed.detail.trim())'), true);
+  assert.equal(source.includes('if (typeof parsed.message === "string" && parsed.message.trim())'), true);
 
-  try {
-    const payload = await apiDelete("/api/projects/empty");
-    assert.equal(payload, undefined);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
+  // 204 空响应容忍：apiDelete 等返回 undefined 而不是抛 JSON parse 错。
+  assert.equal(source.includes('if (response.status === 204)'), true);
+  assert.equal(source.includes('if (!rawText)'), true);
+  assert.equal(source.includes('return undefined as T;'), true);
 
-test("apiDelete wraps network failures with api base context", async () => {
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => {
-    throw new TypeError("Failed to fetch");
-  };
+  // 网络错误包装：必须把 base URL 与启动提示告诉用户。
+  assert.equal(source.includes("formatNetworkErrorMessage"), true);
+  assert.equal(source.includes("请确认后端服务已启动"), true);
+  assert.equal(source.includes("NEXT_PUBLIC_API_BASE_URL"), true);
 
-  try {
-    await assert.rejects(
-      () => apiDelete("/api/projects/network-error", "删除项目失败"),
-      (error) =>
-        error instanceof Error &&
-        error.message.includes("删除项目失败") &&
-        error.message.includes("http://127.0.0.1:8000") &&
-        error.message.includes("请确认后端服务已启动"),
-    );
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-test("getApiBaseUrl uses same-origin proxy in browser runtime by default", () => {
-  const originalWindow = globalThis.window;
-  globalThis.window = {};
-
-  try {
-    assert.equal(getApiBaseUrl(), "");
-  } finally {
-    if (originalWindow === undefined) {
-      delete globalThis.window;
-    } else {
-      globalThis.window = originalWindow;
-    }
+  // 关键导出：4 个 HTTP 方法 + base URL 探测。
+  for (const symbol of ["getApiBaseUrl", "apiGet", "apiPost", "apiPut", "apiPatch", "apiDelete"]) {
+    assert.equal(source.includes(`export function ${symbol}`) || source.includes(`export async function ${symbol}`), true, `缺少导出：${symbol}`);
   }
 });

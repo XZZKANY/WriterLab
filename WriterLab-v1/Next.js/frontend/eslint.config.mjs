@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 历史调试脚本（CommonJS）。仅手工执行，不参与构建；不让 lint 报 require() 错。
+    "fork-test.js",
+    "fork-child.js",
   ]),
 ]);
 

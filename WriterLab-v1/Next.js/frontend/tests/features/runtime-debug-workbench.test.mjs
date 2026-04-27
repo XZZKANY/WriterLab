@@ -18,7 +18,7 @@ test("runtime debug workbench 的源码契约覆盖关键交互与状态回收",
   ]);
 
   assert.equal(source.includes("Workflow Debug"), true);
-  assert.equal(source.includes("Provider Runtime"), true);
+  assert.equal(source.includes("运行时就绪度"), true);
   assert.equal(source.includes("Smoke Console"), true);
   assert.equal(source.includes("Provider Matrix"), true);
   assert.equal(source.includes("Context Compiler"), true);
