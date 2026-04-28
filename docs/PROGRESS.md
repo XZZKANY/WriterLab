@@ -859,9 +859,17 @@ commit: `refactor(repo): T-8 仓库顶层重组 — WriterLab-v1/ → apps/docs/
 ### 当前状态
 
 - 后端：**576 passed**（截至 T-27）；新路径 `apps/backend/`
-- 前端：17/17 passed；tsc clean；ESLint exit 0；新路径 `apps/frontend/`
+- 前端：**19/19 passed**；tsc clean；ESLint exit 0；新路径 `apps/frontend/`
 - 仓库根：已无 `WriterLab-v1/`；结构为 `apps/ docs/ scripts/ .codex/ AGENTS.md README.md`
 - pyflakes：干净
+
+### 补充进展（2026-04-28 晚）
+
+- 新增 `apps/frontend/tests/features/projects-settings-contract.test.mjs`
+- 前端源码契约测试新增 **2 个用例**：
+  - `lib/api/projects.ts`：项目 CRUD / overview / books / chapters 路径契约
+  - `lib/api/settings.ts`：provider settings 独立读写契约与错误文案
+- 验证：前端 node:test **19/19 passed**
 
 ### 用户需手动完成（venv 迁移）
 
@@ -875,3 +883,4 @@ python -m venv .venv
 cd D:\WritierLab\apps\frontend
 npm install
 ```
+

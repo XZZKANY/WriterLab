@@ -2,21 +2,21 @@
 
 ## Standard Startup Order
 1. Install backend dependencies:
-   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\install-backend.ps1`
+   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\dev\install-backend.ps1`
 2. Run backend static checks:
-   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\check-backend.ps1`
+   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\check\check-backend.ps1`
 3. Start backend.
    `start-backend.ps1` now runs `alembic upgrade head` before launching FastAPI.
-   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\start-backend.ps1`
+   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\dev\start-backend.ps1`
 4. Run frontend checks:
-   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\check-frontend.ps1`
+   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\check\check-frontend.ps1`
 5. Start frontend:
-   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\start-frontend.ps1`
+   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\dev\start-frontend.ps1`
 6. Run live smoke after the stack is up:
-   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\check-backend.ps1 -FullSmoke`
-   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\check-backend.ps1 -FullSmoke -Scenario style_fail`
-   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\check-backend.ps1 -FullSmoke -LiveProviders`
-   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\WriterLab-v1\scripts\check-frontend.ps1 -LiveUiSmoke`
+   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\check\check-backend.ps1 -FullSmoke`
+   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\check\check-backend.ps1 -FullSmoke -Scenario style_fail`
+   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\check\check-backend.ps1 -FullSmoke -LiveProviders`
+   `powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\check\check-frontend.ps1 -LiveUiSmoke`
 
 ## Live Smoke Matrix
 - Backend deterministic smoke:
@@ -84,7 +84,7 @@
 ## Known Environment Caveat
 - `npm.cmd run build:node` may fail with Windows `spawn EPERM` in restricted shells.
 - Treat that as an environment limitation unless TypeScript compilation also fails.
-- `scripts/check-frontend.ps1` now treats `spawn EPERM` as a warning, not a code regression.
+- `scripts/check/check-frontend.ps1` now treats `spawn EPERM` as a warning, not a code regression.
 - `check-frontend.ps1 -LiveUiSmoke` does not use `Invoke-WebRequest`; it uses a raw socket Node script to avoid local PowerShell web-client anomalies.
 
 ## Health and Self-Check Endpoints
@@ -100,6 +100,6 @@
 ## Demo Data Repair
 - Demo repair is optional and not part of the normal startup path.
 - Dry run:
-  `D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe D:\WritierLab\WriterLab-v1\scripts\fix_demo_garbled_data.py`
+  `D:\WritierLab\apps\backend\.venv\Scripts\python.exe D:\WritierLab\scripts\data\fix_demo_garbled_data.py`
 - Apply:
-  `D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe D:\WritierLab\WriterLab-v1\scripts\fix_demo_garbled_data.py --apply`
+  `D:\WritierLab\apps\backend\.venv\Scripts\python.exe D:\WritierLab\scripts\data\fix_demo_garbled_data.py --apply`

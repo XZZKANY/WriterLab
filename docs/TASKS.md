@@ -237,9 +237,12 @@
 前端 +3 用例（14 → 17）：
 - **scenes-workflow-contract.test.mjs**（3）：lib/api/scenes.ts 的 scene/version/branch CRUD 与 diff/restore/adopt 路径；lib/api/workflow.ts 的 analyze/write/revise + workflow 编排 + scan/export；lib/api/settings.ts 的 provider settings 双向同步。
 
+前端 +2 用例（17 → 19）：
+- **projects-settings-contract.test.mjs**（2）：lib/api/projects.ts 的项目 CRUD / overview / books / chapters 路径契约；lib/api/settings.ts 的 provider settings 独立读写契约与错误文案。
+
 所有测试同步到当前 backend services / repositories / api 的真实接口；零行为变更；零业务逻辑修改；零新依赖。
 
-验证：pytest **545 passed**（390 + 155）；前端 typecheck 干净；ESLint exit 0；前端测试 17 用例全过。
+验证：pytest **545 passed**（390 + 155）；前端 typecheck 干净；ESLint exit 0；前端测试 19 用例全过。
 
 ### T-27 workflow_execution / persistence / runtime 三模块直测（+31 用例）
 
@@ -249,12 +252,12 @@
 - 验证：pytest **576 passed**（545 + 31）。
 - **状态**：✅ 完成（2026-04-28）
 
-## 待办（已识别但本轮未处理，需用户确认或后续阶段）
+## 已归档（已识别但不再作为待办推进）
 
-### T-6 后端两大 service 文件按职责拆分
+### T-6 后端两大 service 文件按职责拆分 ✅
 
 - **背景**：`app/services/workflow_service.py` 926 行 + `app/services/ai_gateway_service.py` 835 行，单文件巨大。
-- **状态总览**：所有子任务全部完成。
+- **归档原因**：所有子任务全部完成，不应继续留在“待办”区。
 
 #### 已完成
 

@@ -15,7 +15,7 @@
 
 | 层 | 实测版本 | 说明 |
 |---|---|---|
-| Python | 3.10.11 | venv 在 `WriterLab-v1/fastapi/backend/.venv/`（注意：不是 `WriterLab-v1/.venv/`，README 早期版本写错了路径） |
+| Python | 3.10.11 | venv 在 `apps/backend/.venv/`（T-8 重组后新路径；旧 `WriterLab-v1/fastapi/backend/.venv/` 已删除） |
 | FastAPI | 0.135.2 | |
 | Starlette | 1.0.0 | |
 | Pydantic | 2.12.5 | 全部 schema 已用 pydantic v2 ConfigDict 风格 |
@@ -31,29 +31,31 @@
 
 ### 3. 安装 / 启动 / 测试 / 构建命令实测可跑
 
+T-8 完成后新路径（`apps/backend/` 和 `apps/frontend/`）：
+
 ```powershell
 # 后端依赖（新机器）
-& 'D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe' -m pip install -r 'D:\WritierLab\WriterLab-v1\fastapi\backend\requirements.txt'
+powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\dev\install-backend.ps1
 
 # 后端启动（必须有可访问的 PostgreSQL，且 alembic 已迁移）
-& 'D:\WritierLab\WriterLab-v1\fastapi\backend\.venv\Scripts\python.exe' -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --app-dir 'D:\WritierLab\WriterLab-v1\fastapi\backend'
+powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\dev\start-backend.ps1
 
-# 后端测试（不依赖真实 DB；使用 in-memory 或 mock）
-cd D:\WritierLab\WriterLab-v1\fastapi\backend
-.venv\Scripts\python.exe -m pytest                            # 110 passed
+# 后端测试（不依赖真实 DB；FakeDB/SimpleNamespace 模式）
+cd D:\WritierLab\apps\backend
+.venv\Scripts\python.exe -m pytest                            # 576 passed（2026-04-28）
 
 # 前端依赖（新机器）
-cd D:\WritierLab\WriterLab-v1\Next.js\frontend
+cd D:\WritierLab\apps\frontend
 npm install
 
 # 前端启动
-npm run dev -- --hostname 127.0.0.1 --port 3000
+powershell -ExecutionPolicy Bypass -File D:\WritierLab\scripts\dev\start-frontend.ps1
 
 # 前端类型检查
 node ./node_modules/typescript/bin/tsc --noEmit               # 干净
 
 # 前端契约测试（原生 node:test，无 jest）
-for /f %f in ('dir /b tests\features\*.test.mjs') do node tests\features\%f
+for /f %f in ('dir /b tests\features\*.test.mjs') do node tests\features\%f   # 19 passed
 
 # 前端构建
 npm run build                                                 # Windows 受限 shell 下可能 spawn EPERM；脚本已视为环境 caveat
@@ -79,7 +81,7 @@ npm run build                                                 # Windows 受限 s
 
 ### 5. 易踩的"知识与代码不一致"
 
-- **`WriterLab-v1/.venv/` 不存在**；旧 README 的启动命令 `& 'D:\WritierLab\WriterLab-v1\.venv\Scripts\python.exe' ...` 会失败。真实 venv 在 `WriterLab-v1/fastapi/backend/.venv/`。
+- **T-8 重组后路径变更**：venv 在 `apps/backend/.venv/`；脚本在 `scripts/dev/` 和 `scripts/check/`；文档在 `docs/`。旧 `WriterLab-v1/` 结构已全部删除。
 - **`requirements.txt`（重写前）严重缺依赖**：缺 SQLAlchemy/alembic/psycopg/dotenv/pytest/httpx/Mako 等。本轮已修。
 - **`db/session.py` 之前 `echo=True` 写死**：每次启动 / 每条 SQL 都打印；本轮已改为 `DATABASE_ECHO` 环境变量驱动。
 - **services / api/routers 之前的双层结构**是半成品迁移：调用方实际只走扁平路径，子包层是 dead weight。本轮已收口。
@@ -88,13 +90,14 @@ npm run build                                                 # Windows 受限 s
 
 ### 6. 文档存量与价值
 
-`.codex/` 与 `docs/` 都堆了大量历史材料，几条最有价值的：
+T-8 重组后文档已迁移到新路径，几条最有价值的：
 
-- `WriterLab-v1/docs/project-overview-zh.md`：最完整的中文项目盘点（数据模型 + API 总览）。
-- `WriterLab-v1/docs/runtime-notes.md`：启动顺序、smoke 报告位置、Windows EPERM caveat。
-- `WriterLab-v1/docs/local-verification-zh.md`：前后端验证顺序与 smoke 覆盖范围。
-- `docs/superpowers/specs/2026-04-24-repository-restructure-design.md` + `plans/2026-04-24-repository-restructure-plan.md`：仓库结构 `apps/docs/scripts` 重组完整方案，未实施。
-- `.codex/operations-log.md` / `verification-report.md`：phase-3/4 的开发留痕，按 AGENTS.md 重型流程产出，量大但已成历史档案。
+- `docs/project/project-overview-zh.md`：最完整的中文项目盘点（数据模型 + API 总览）。
+- `docs/runbooks/runtime-notes.md`：启动顺序、smoke 报告位置、Windows EPERM caveat。
+- `docs/verification/local-verification-zh.md`：前后端验证顺序与 smoke 覆盖范围。
+- `docs/usage-guide-zh.md`：用户使用指南（启动、编辑器、AI 功能、工作流、分支、Provider 设置、FAQ）。
+- `docs/superpowers/specs/2026-04-24-repository-restructure-design.md` + `plans/2026-04-24-repository-restructure-plan.md`：T-8 重组方案（已实施）。
+- `.codex/operations-log.md` / `verification-report.md`：phase-3/4 的开发留痕，量大但已成历史档案。
 
 ### 7. 历史产物盘点（仓库根）
 
@@ -119,16 +122,19 @@ npm run build                                                 # Windows 受限 s
 - **前端契约测试是断字符串 + import 路径**：拆 sub-component 时要保证测试断言到的标识符（如 `setBusyKey("loadWorkflow")`）继续出现在指定文件中。否则会破测试。
 - **拆出 workflow_service 的子模块要"回拉名字"**：`workflow_service.py` 的测试用 `monkeypatch.setattr("app.services.workflow_service.<name>", ...)` 字符串路径替换 18+ 个私有符号。任何拆出的符号都必须在 workflow_service.py 顶部用 `from app.services.workflow_<x> import <name>` import 回来；否则 monkeypatch 失效但测试还是会"看似通过"。
 
-### 9. T-6 拆分后的工作流模块速记
+### 9. T-6 拆分后的工作流模块速记（T-6 全部完成）
 
-经过 T-6.A1 / A2 / A3，workflow 调用链如下：
+经过 T-6.A1 / A2 / A3 / A4，workflow 调用链如下：
 
 - `app/services/workflow_constants.py`（115 行）：步骤顺序、agent 元数据、配置常量、纯小工具
 - `app/services/workflow_prompts.py`（60 行）：planner / style prompt 与候选记忆文本拼接
 - `app/services/workflow_extractors.py`（128 行）：步骤快照解析与最终输出组装
-- `app/services/workflow_service.py`（774 行）：DB 触达辅助 + `_run_scene_workflow` 主引擎 + 后台 runner + 公开 API
+- `app/services/workflow_execution.py`（294 行）：`_run_scene_workflow` 主流程编排
+- `app/services/workflow_persistence.py`（366 行）：DB 触达辅助（~20 个函数）
+- `app/services/workflow_runtime.py`（72 行）：runner/recovery 内核
+- `app/services/workflow_service.py`（191 行）：facade + re-export（公开 API 入口）
 
-调用方仍然只需要 `from app.services.workflow_service import ...` 一行；上述 4 个文件的拆分是物理拆分，逻辑命名空间不变。
+调用方仍然只需要 `from app.services.workflow_service import ...` 一行；上述 7 个文件的拆分是物理拆分，逻辑命名空间不变。
 
 ### 9.1 T-6.B 拆分后的 ai_gateway 模块速记（含 B4.1 / B4.2）
 
@@ -139,7 +145,10 @@ npm run build                                                 # Windows 受限 s
 - `app/services/ai_gateway_fixtures.py`（110 行）：smoke fixture 模式下的确定性文本生成器
 - `app/services/ai_gateway_views.py`（84 行）：5 个只读视图函数（_peek_* + 3 个零 state 辅助）。两个 _peek_* 用 lazy import 读主模块 state dict
 - `app/services/ai_gateway_skip_reason.py`（76 行）：4 个决策链（rate_limit / budget / circuit / skip_reason）。lazy import 主模块 _REQUEST_WINDOWS 与 D 块函数
-- `app/services/ai_gateway_service.py`（487 行）：state 字典 + state init/read（D 块）+ record_* + DB profile 解析 + HTTP 调用 + 公开入口
+- `app/services/ai_gateway_provider.py`（103 行）：HTTP/Ollama 实际调用
+- `app/services/ai_gateway_state.py`（85 行）：state init + record_*
+- `app/services/ai_gateway_routing.py`（131 行）：profile 解析 + 路由矩阵
+- `app/services/ai_gateway_service.py`（296 行）：state 字典 + _reset + call_ai_gateway 主入口 + 公开查询
 
 **关键不变量**：
 - `_REQUEST_WINDOWS / _PROFILE_RUNTIME_STATE / _PROVIDER_RUNTIME_STATE` 三个 state 字典**必须留在 ai_gateway_service.py**。测试 `gateway._PROVIDER_RUNTIME_STATE["ollama"] = {...}` 直接 mutate；分离会让多个模块持有不同对象。
@@ -148,25 +157,26 @@ npm run build                                                 # Windows 受限 s
 - views / skip_reason 内部用 **lazy import**（函数体内）访问主模块 state，避开循环 import 加载顺序问题。Python 的 `from X import Y` 每次执行都从 X.\_\_dict\_\_ 重新查 Y，所以测试的 monkeypatch + dict mutation 在两边都能命中。
 - `_resolve_profiles / _call_provider / _step_runtime_profiles` 是测试 monkeypatch 主目标，**目前留在主模块不动**。
 
-### 9.2 进一步拆分的高风险点（剩余 T-6.B4.3 / T-6.A4 候选，需独立 plan）
+### 9.2 T-6 全部完成（B4.3 / A4 已于 2026-04-28 完成）
 
-- ai_gateway_service 的 H 块（HTTP / Ollama 调用 `_openai_compatible_generate / _call_provider`）：被测试 monkeypatch.setattr 直接接管，分离要重新审视
-- ai_gateway_service 的 state 写入（`_record_request / _record_success / _record_failure`）与 D 块 init（`_profile_runtime_state / _provider_runtime_state`）：与三个 state 字典强绑定，写入逻辑与熔断阈值强耦合
-- ai_gateway_service 的 B 块 profile 解析（`_resolve_profiles / _step_runtime_profiles / _profile_to_dict`）：DB 触达 + monkeypatch 主目标
-- workflow_service 的 DB 辅助层（`_create_run / _set_run_state / _create_step / _finish_step / _stable_resume_checkpoint`）：互相调用且与 ORM commit 节奏强耦合
-- workflow_service 的后台 runner（`_workflow_runner_loop / _claim_next_workflow_run`）：模块级 `_WORKFLOW_RUNNER_LOCK` + `_WORKFLOW_RUNNER_STARTED` 状态
+- T-6.B4.3.a：`ai_gateway_provider.py`（H 块 HTTP/Ollama，103 行）✅
+- T-6.B4.3.b：`ai_gateway_state.py`（D 块 state init + record_*，85 行）✅
+- T-6.B4.3.c：`ai_gateway_routing.py`（B 块 profile 解析 + 路由矩阵，131 行）✅
+- T-6.A4：`workflow_execution.py`（294 行）+ `workflow_persistence.py`（366 行）+ `workflow_runtime.py`（72 行）✅
 
-### 10. 测试套件覆盖（截至 T-6.B4 后续维护）
+三个 state dict（`_REQUEST_WINDOWS / _PROFILE_RUNTIME_STATE / _PROVIDER_RUNTIME_STATE`）与 `_reset_gateway_runtime_state` 保留在 `ai_gateway_service.py`，其余全部按职责拆出。
 
-后端 pytest 总数从 110 增长到 **353**（+243）。新覆盖的纯函数模块：
+### 10. 测试套件覆盖（截至 T-27 / 2026-04-28）
 
-- workflow_constants / workflow_extractors / workflow_prompts（T-6.A 拆出的）
-- runtime_status_service / runtime_events / scene_status_service / provider_settings_service
+后端 pytest 总数从 110 增长到 **576**（+466）。新覆盖的模块：
+
+- workflow_constants / workflow_extractors / workflow_prompts / workflow_execution / workflow_persistence / workflow_runtime（T-6.A 全部）
+- ai_gateway_constants / ai_gateway_costing / ai_gateway_fixtures / ai_gateway_views / ai_gateway_skip_reason / ai_gateway_provider / ai_gateway_state / ai_gateway_routing（T-6.B 全部）
+- runtime_status_service / scene_status_service / provider_settings_service
 - vn_export_service / style_negative_service / ai_prompt_templates
-- scene_version_service（带 FakeQuery / FakeDB）
-- branch_service 边界与错误路径
-- scene_write_service / scene_revise_service / scene_analysis_service 的 helper 函数
-- ai_gateway_constants / ai_gateway_costing / ai_gateway_fixtures（T-6.B 拆出的）
-- **ai_gateway_views / ai_gateway_skip_reason（T-6.B4.1 / B4.2 拆出的）**
+- scene_version_service / scene_write_service / scene_revise_service / scene_analysis_service
+- branch_service / ollama_service / ai_run_service / scene_analysis_store_service
+- 全部 repositories（project / lore / timeline / scene / workflow）
+- 全部 routes（health / settings / scenes / lore / vn_consistency / knowledge / ai / project_book_chapter）
 
-这些直测让 T-6 后续阶段（A4 / B4.3 进一步拆分）的拆分有了更扎实的"安全网"。
+前端 node:test 从 14 增长到 **19**（+5）：新增 scenes-workflow-contract.test.mjs（3）与 projects-settings-contract.test.mjs（2）。
